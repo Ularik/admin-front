@@ -35,3 +35,9 @@ export interface UserResponse {
   status: UserRole;
   department: number | null;
 }
+
+export interface LoginFormData {
+  username: string;
+  last_name: string;
+  password: string;
+}

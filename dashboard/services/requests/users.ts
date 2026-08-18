@@ -1,14 +1,40 @@
-import axiosApi from "../axiosApi";
-import type { UserType, UserRegisterType, UserResponse } from "@/types/user";
+import { Query } from "@tanstack/react-query";
+import axiosApi from "../../lib/axiosApi";
+import type {
+  UserType,
+  UserRegisterType,
+  UserResponse,
+  LoginFormData,
+} from "@/types/user";
 
-
-
-export async function registerUser(body: UserRegisterType): Promise<UserResponse> {
+export async function registerUser(
+  body: UserRegisterType,
+): Promise<UserResponse> {
   const { data } = await axiosApi.post<UserResponse>("/users/", body);
   return data;
 }
 
 export async function getMe(): Promise<UserType> {
-    const res = await axiosApi.get("users/me");
-    return res.data;
+  const res = await axiosApi.get("users/me");
+  return res.data;
+}
+
+export async function getUsers(department_id?: number): Promise<UserType[]> {
+  const res = await axiosApi.get("users/", {
+    params: {
+      department_id,
+    },
+  });
+
+  return res.data;
+}
+
+export async function login(body: LoginFormData) {
+  const res = await axiosApi.post("/users/login", body);
+  return res.data;
+}
+
+export async function logout() {
+  const res = await axiosApi.post("/users/logout");
+  return res.data;
 }

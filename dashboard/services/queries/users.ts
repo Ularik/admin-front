@@ -1,8 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { getMe } from "@/services/requests/users";
 import { useMutation } from "@tanstack/react-query";
-import { registerUser } from "@/services/requests/users";
-
+import { registerUser, login, getMe, logout, getUsers } from "@/services/requests/users";
 
 export function useRegisterMutation() {
   return useMutation({
@@ -10,10 +8,28 @@ export function useRegisterMutation() {
   });
 }
 
-export function useUser() {
-    return useQuery({
-        queryKey: ["me"],
-        queryFn: getMe
-    })
-};
+export function useMe() {
+  return useQuery({
+    queryKey: ["me"],
+    queryFn: getMe,
+  });
+}
 
+export function useUsers(department_id?: number) {
+  return useQuery({
+    queryKey: ["users"],
+    queryFn: () => getUsers(department_id),
+  });
+}
+
+export function useLogin() {
+  return useMutation({
+    mutationFn: login,
+  });
+}
+
+export function useLogout() {
+  return useMutation({
+    mutationFn: logout,
+  });
+}

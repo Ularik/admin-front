@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const apiURL = "http://127.0.0.1:8001";
+const apiURL = "http://localhost:8001";
 
 const axiosApi = axios.create({
   baseURL: apiURL,
@@ -9,7 +9,7 @@ const axiosApi = axios.create({
 
 const logoutAndRedirect = async () => {
   try {
-    await axios.post(`${apiURL}/users/logout`, {
+    await axios.post(`${apiURL}/users/logout`, null, {
       withCredentials: true,
       timeout: 2000,
     });
@@ -36,17 +36,13 @@ axiosApi.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        await axios.post(
-          `${apiURL}/users/login`,
-          {},
-          { withCredentials: true },
-        );
-
-        return axiosApi(originalRequest);
-      } catch (refreshError) {
         await logoutAndRedirect();
 
-        return Promise.reject(refreshError);
+        return axiosApi(originalRequest);
+      } catch (error) {
+        // await logoutAndRedirect();
+          console.log()
+        return Promise.reject(error);
       }
     }
 

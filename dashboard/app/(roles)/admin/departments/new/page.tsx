@@ -1,0 +1,39 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import DepartmentCreateForm from "@/components/departments/DepartmentCreateForm";
+
+
+
+export default function CreateDepartmentPage() {
+  const router = useRouter();
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-6 p-6 lg:p-8">
+      {/* Шапка страницы */}
+      <div className="flex items-center gap-4 border-b border-zinc-200 pb-5">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => router.back()}
+          className="border-zinc-200 text-zinc-700 hover:bg-zinc-100"
+        >
+          <ArrowLeft size={18} />
+        </Button>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-zinc-900">
+            Создание нового отдела
+          </h1>
+          <p className="text-sm text-zinc-500">
+            Заполните данные для создания нового подразделения в системе
+          </p>
+        </div>
+      </div>
+      <DepartmentCreateForm />
+      
+    </div>
+  );
+}

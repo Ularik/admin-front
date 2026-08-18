@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 
 import { roleDashboardPaths } from '@/constants/main';
 import type { UserRole } from '@/types/user';
-import { useUser } from '@/services/queries/users';
+import { useMe } from '@/services/queries/users';
 
 type Props = {
     children: ReactNode;
@@ -16,23 +16,24 @@ type Props = {
 const ProtectedLayout = ({ children, roles }: Props) => {
     const router = useRouter();
 
-    const { data: user, isLoading } = useUser();
+    const { data: user, isLoading } = useMe();
 
     useEffect(() => {
         if (isLoading) return;
 
         if (!user) {
-            router.replace('/register');
+            console.log(user)
+            router.replace('/login');
             return;
         }
 
         if (user.status === "ADMIN") {
-           roleDashboardPaths[user.status];
+            router.replace(roleDashboardPaths[user.status]);
            return;
         }
 
         if (user.status === "HEAD") {
-            roleDashboardPaths[user.status];
+             router.replace(roleDashboardPaths[user.status]);
             return;
         } {
           router.replace(roleDashboardPaths[user.status]);
