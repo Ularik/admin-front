@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getDepartments, createDepartments } from "../requests/departments";
+import { getDepartments, createDepartments, getDepartmentById, updateDepartment } from "../requests/departments";
 
 
 export const useDepartments = () => {
@@ -19,4 +19,17 @@ export const useAddDepartments = () => {
         queryClient.invalidateQueries({ queryKey: ["departments"] });
       },
     });
+};
+
+export const useOneDepartment = (department_id: string) => {
+  return useQuery({
+    queryKey: ["department", department_id],
+    queryFn: () => getDepartmentById(department_id),
+  });
+};
+
+export const useUpdateDepartment = () => {
+  return useMutation({
+    mutationFn: updateDepartment,
+  });
 };

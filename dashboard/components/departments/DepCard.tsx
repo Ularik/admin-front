@@ -1,5 +1,6 @@
 import type { DepartmentType } from "@/types/departments"
 import { Building2, ArrowUpRight, Calendar } from "lucide-react";
+import Link from "next/link";
 
 import {
   Card,
@@ -8,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import next from "next";
 
 interface Props {
   dept: DepartmentType;
@@ -50,7 +52,9 @@ export default function DepCard({ dept }: Props) {
             </span>
           </div>
           <div className="flex items-center gap-1 text-zinc-900 font-medium group-hover:translate-x-0.5 transition-transform duration-200">
-            <span>Подробнее</span>
+            <Link href={`/admin/departments/${dept.id}`}>
+              <span>Подробнее</span>
+            </Link>
             <ArrowUpRight size={14} />
           </div>
         </div>

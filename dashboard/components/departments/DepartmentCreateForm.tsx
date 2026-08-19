@@ -1,11 +1,13 @@
+"use client";
+
 import { useForm, Controller } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { Loader2, Save } from "lucide-react";
-import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea"; // Стилизованный компонент shadcn
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
@@ -14,51 +16,57 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useAddDepartments } from "@/services/queries/departments";
 import { useUsers } from "@/services/queries/users";
 import type { DepartmentCreateType } from "@/types/departments";
 
-
 interface Props {
-    initialValue?: DepartmentCreateType;
-    departmentId?: number
+  initialValue?: DepartmentCreateType;
+  mutateFunc: (data: DepartmentCreateType) => void;
+  isPending: boolean;
+  submitLabel?: string;
 }
 
-export default function DepartmentCreateForm({ initialValue, departmentId }: Props) {
+export default function DepartmentCreateForm({
+  initialValue,
+  mutateFunc,
+  isPending,
+  submitLabel,
+}: Props) {
   const router = useRouter();
+  const { data: users = [], isLoading: isUsersLoading } = useUsers();
 
-      const { mutate: create, isPending, error } = useAddDepartments();
+  const isEdit = Boolean(initialValue);
 
-      const { data: users = [], isLoading: isUsersLoading } = useUsers();
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors },
+  } = useForm<DepartmentCreateType>({
+    // `values` автоматически реактивно обновит форму при загрузке initialValue с сервера
+    values: initialValue || {
+      title: "",
+      description: "",
+      head_id: null,
+      deputy_head_id: null,
+    },
+  });
 
-      const {
-        register,
-        handleSubmit,
-        control,
-        formState: { errors },
-      } = useForm<DepartmentCreateType>({
-        defaultValues: {
-          title: "",
-          description: "",
-          head_id: null,
-          deputy_head_id: null,
-        },
-      });
+  const onSubmit = (data: DepartmentCreateType) => {
+    mutateFunc(data);
+  };
 
-      const onSubmit = async (data: DepartmentCreateType) => {
-        create(data, {
-          onSuccess: () => {
-            toast.success("Отдел успешно создан");
-            router.push("/admin/departments");
-          },
-          onError: () => {
-            toast.error("Ошибка при создании");
-          },
-        });
-      };
+  // Вспомогательный форматировщик имени пользователя
+  const getUserDisplayName = (user: (typeof users)[number]) => {
+    const fullName = [user.username, user.last_name]
+      .filter(Boolean)
+      .join(" ");
+    return fullName || user.username || `Пользователь #${user.id}`;
+  };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      {/* Основная информация */}
       <Card className="border-zinc-200 bg-white shadow-xs">
         <CardHeader>
           <CardTitle className="text-base font-semibold text-zinc-900">
@@ -101,11 +109,11 @@ export default function DepartmentCreateForm({ initialValue, departmentId }: Pro
             >
               Описание
             </Label>
-            <textarea
+            <Textarea
               id="description"
               rows={4}
               placeholder="Подробно опишите сферы ответственности и задачи отдела..."
-              className="flex w-full rounded-md border border-zinc-200 bg-transparent px-3 py-2 text-sm shadow-xs placeholder:text-zinc-400 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-zinc-900 disabled:cursor-not-allowed disabled:opacity-50"
+              className="border-zinc-200 focus-visible:ring-zinc-900 resize-none"
               {...register("description")}
             />
           </div>
@@ -132,17 +140,20 @@ export default function DepartmentCreateForm({ initialValue, departmentId }: Pro
                 <Select
                   disabled={isUsersLoading}
                   onValueChange={(val) =>
-                    field.onChange(val ? Number(val) : null)
+                    field.onChange(val === "none" ? null : Number(val))
                   }
-                  value={field.value ? String(field.value) : ""}
+                  value={field.value ? String(field.value) : "none"}
                 >
                   <SelectTrigger className="w-full border-zinc-200 focus:ring-zinc-900">
                     <SelectValue placeholder="Выберите руководителя" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="none" className="text-muted-foreground">
+                      Не выбрано
+                    </SelectItem>
                     {users.map((user) => (
                       <SelectItem key={user.id} value={String(user.id)}>
-                        {user.username || user.last_name}
+                        {getUserDisplayName(user)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -163,17 +174,20 @@ export default function DepartmentCreateForm({ initialValue, departmentId }: Pro
                 <Select
                   disabled={isUsersLoading}
                   onValueChange={(val) =>
-                    field.onChange(val ? Number(val) : null)
+                    field.onChange(val === "none" ? null : Number(val))
                   }
-                  value={field.value ? String(field.value) : ""}
+                  value={field.value ? String(field.value) : "none"}
                 >
                   <SelectTrigger className="w-full border-zinc-200 focus:ring-zinc-900">
                     <SelectValue placeholder="Выберите заместителя" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="none" className="text-muted-foreground">
+                      Не выбрано
+                    </SelectItem>
                     {users.map((user) => (
                       <SelectItem key={user.id} value={String(user.id)}>
-                        {user.username || user.last_name}
+                        {getUserDisplayName(user)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -197,7 +211,7 @@ export default function DepartmentCreateForm({ initialValue, departmentId }: Pro
         <Button
           type="submit"
           disabled={isPending}
-          className="flex items-center gap-2 bg-zinc-900 text-white hover:bg-zinc-800 shadow-sm"
+          className="flex items-center gap-2 bg-zinc-900 text-white hover:bg-zinc-800 shadow-xs"
         >
           {isPending ? (
             <>
@@ -207,7 +221,8 @@ export default function DepartmentCreateForm({ initialValue, departmentId }: Pro
           ) : (
             <>
               <Save size={16} />
-              Создать отдел
+              {submitLabel ||
+                (isEdit ? "Сохранить изменения" : "Создать отдел")}
             </>
           )}
         </Button>

@@ -7,11 +7,19 @@ export interface DepartmentCreateType {
 
 
 export interface DepartmentType {
-  id: number;
+  id: string;
   title: string;
   description: string;
   head_id: number | null;
   deputy_head_id: number | null;
   created_at: Date;
   updated_at: Date;
+}
+
+export interface DepartmentUpdateType {
+  id: string;
+  title: string;
+  description: string;
+  head_id: number | null;
+  deputy_head_id: number | null;
 }

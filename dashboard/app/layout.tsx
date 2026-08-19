@@ -3,6 +3,7 @@ import { Montserrat, Inter } from "next/font/google";
 import "./globals.css";
 import Providers from "@/providers/provider";
 import { cn } from "@/lib/utils";
+import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 
@@ -33,6 +34,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       )}
     >
       <body className="min-h-full">
+        <Toaster/>
         <Providers>
           {children}
         </Providers>

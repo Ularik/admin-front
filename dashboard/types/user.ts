@@ -1,6 +1,6 @@
 
 
-export type UserRole = "ADMIN" | "HEAD" | "USER";
+export type UserRole = "ADMIN" | "HEAD" | "DEPUTY" | "USER";
 
 
 export interface UserType {
@@ -34,6 +34,16 @@ export interface UserResponse {
   last_name: string;
   status: UserRole;
   department: number | null;
+}
+
+export interface UserWithDepartment {
+  id: number;
+  username: string;
+  last_name: string | null;
+  status: string;
+  member_department: string | null;
+  head_of_department: string | null;
+  deputy_head_of_department: string | null;
 }
 
 export interface LoginFormData {

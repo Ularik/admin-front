@@ -46,8 +46,8 @@ export const dashboardMenuItems: DashboardMenuItem[] = [
     icon: Newspaper,
   },
   {
-    label: "Начальники отделов",
-    href: "/admin/heads",
+    label: "Сотрудники",
+    href: "/admin/users",
     roles: ["ADMIN"],
     icon: Plane,
   },

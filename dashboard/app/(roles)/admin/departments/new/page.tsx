@@ -2,14 +2,29 @@
 
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-
 import { Button } from "@/components/ui/button";
 import DepartmentCreateForm from "@/components/departments/DepartmentCreateForm";
-
+import { useAddDepartments } from "@/services/queries/departments";
+import { DepartmentCreateType } from "@/types/departments";
+import { toast } from "sonner";
 
 
 export default function CreateDepartmentPage() {
   const router = useRouter();
+
+  const { mutate: addDep, isPending } = useAddDepartments();
+
+  const submit = (data: DepartmentCreateType) => {
+    addDep(data, {
+      onSuccess: () => {
+        toast.success("Отдел успешно создан");
+        router.push("/admin/departments");
+      },
+      onError: () => {
+        toast.error("Ошибка при создании");
+      },
+    });
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 p-6 lg:p-8">
@@ -32,7 +47,7 @@ export default function CreateDepartmentPage() {
           </p>
         </div>
       </div>
-      <DepartmentCreateForm />
+      <DepartmentCreateForm mutateFunc={submit} isPending={isPending} />
       
     </div>
   );

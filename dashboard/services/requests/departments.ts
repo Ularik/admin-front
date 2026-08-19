@@ -1,5 +1,5 @@
 import axiosApi from "@/lib/axiosApi";
-import type { DepartmentType, DepartmentCreateType } from "@/types/departments";
+import type { DepartmentType, DepartmentCreateType, DepartmentUpdateType } from "@/types/departments";
 
 export async function getDepartments(): Promise<DepartmentType[]> {
   const res = await axiosApi.get("/departments");
@@ -8,5 +8,20 @@ export async function getDepartments(): Promise<DepartmentType[]> {
 
 export async function createDepartments(body: DepartmentCreateType): Promise<DepartmentType> {
   const res = await axiosApi.post("/admin/departments/", body);
+  return res.data;
+}
+
+export async function getDepartmentById(
+  department_id: string,
+): Promise<DepartmentType> {
+  const res = await axiosApi.get(`/departments/${department_id}`);
+  return res.data;
+}
+
+export async function updateDepartment(
+  body: DepartmentUpdateType,
+): Promise<DepartmentType> {
+  const { id, ...payload } = body;
+  const res = await axiosApi.put(`/admin/departments/${id}`, payload);
   return res.data;
 }

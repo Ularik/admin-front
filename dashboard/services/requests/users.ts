@@ -2,6 +2,7 @@ import { Query } from "@tanstack/react-query";
 import axiosApi from "../../lib/axiosApi";
 import type {
   UserType,
+  UserWithDepartment,
   UserRegisterType,
   UserResponse,
   LoginFormData,
@@ -19,7 +20,7 @@ export async function getMe(): Promise<UserType> {
   return res.data;
 }
 
-export async function getUsers(department_id?: number): Promise<UserType[]> {
+export async function getUsers(department_id?: number): Promise<UserWithDepartment[]> {
   const res = await axiosApi.get("users/", {
     params: {
       department_id,
