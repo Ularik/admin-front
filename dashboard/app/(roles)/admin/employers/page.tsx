@@ -81,7 +81,7 @@ export default function EmployeesPage() {
           </div>
 
           {/* Кнопка перехода к форме создания */}
-          <Link href="/admin/users/new">
+          <Link href="/admin/employers/new">
             <Button className="bg-zinc-900 hover:bg-zinc-800 text-white shrink-0">
               <UserPlus className="h-4 w-4 mr-2" />
               Добавить

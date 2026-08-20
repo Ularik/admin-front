@@ -16,6 +16,11 @@ export interface DepartmentType {
   updated_at: Date;
 }
 
+export interface DepartmentLiteType {
+  id: string;
+  title: string;
+}
+
 export interface DepartmentUpdateType {
   id: string;
   title: string;

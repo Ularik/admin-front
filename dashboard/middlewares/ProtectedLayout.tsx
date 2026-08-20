@@ -1,54 +1,48 @@
-'use client';
+"use client";
 
-import type { ReactNode } from 'react';
-import { useEffect } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import type { ReactNode } from "react";
+import { useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
 
-import { roleDashboardPaths } from '@/constants/main';
-import type { UserRole } from '@/types/user';
-import { useMe } from '@/services/queries/users';
+import { roleDashboardPaths } from "@/constants/main";
+import type { UserRole } from "@/types/user";
+import { useMe } from "@/services/queries/users";
 
 type Props = {
-    children: ReactNode;
-    roles: UserRole[];
+  children: ReactNode;
+  roles: UserRole[];
 };
 
 const ProtectedLayout = ({ children, roles }: Props) => {
-    const router = useRouter();
+  const router = useRouter();
+  const pathname = usePathname();
 
-    const { data: user, isLoading } = useMe();
+  const { data: user, isLoading } = useMe();
 
-    useEffect(() => {
-        if (isLoading) return;
+  useEffect(() => {
+    if (isLoading) return;
 
-        if (!user) {
-            console.log(user)
-            router.replace('/login');
-            return;
-        }
-
-        if (user.status === "ADMIN") {
-            router.replace(roleDashboardPaths[user.status]);
-           return;
-        }
-
-        if (user.status === "HEAD") {
-             router.replace(roleDashboardPaths[user.status]);
-            return;
-        } {
-          router.replace(roleDashboardPaths[user.status]);
-        }
-    }, [isLoading, router, user]);
-
-    if (isLoading || !user) {
-        return null;
+    if (!user) {
+      router.replace("/login");
+      return;
     }
 
     if (!roles.includes(user.status)) {
-        return null;
-    }
+      const redirectPath = roleDashboardPaths[user.status] || "/login";
 
-    return <>{children}</>;
+      // Предотвращаем бесконечный редирект на тот же URL
+      if (pathname !== redirectPath) {
+        router.replace(redirectPath);
+      }
+    }
+  }, [isLoading, router, user, roles, pathname]);
+
+  // Защита от мигания интерфейса во время загрузки или редиректа
+  if (isLoading || !user || !roles.includes(user.status)) {
+    return null; // Здесь можно вернуть Loader/Spinner
+  }
+
+  return <>{children}</>;
 };
 
 export default ProtectedLayout;

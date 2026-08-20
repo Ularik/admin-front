@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, Controller } from "react-hook-form";
 import {
@@ -12,9 +12,11 @@ import {
   Users,
   FileText,
   UploadCloud,
+  ChevronsUpDown,
+  Check,
 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -27,12 +29,18 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 
 import type { TaskCreateType } from "@/types/tasks";
 import { useCreateTask } from "@/services/queries/tasks";
@@ -43,11 +51,11 @@ export default function CreateTaskPage() {
   const router = useRouter();
   const createTask = useCreateTask();
   const [serverError, setServerError] = useState<string | null>(null);
+  const [openDeptSelect, setOpenDeptSelect] = useState(false);
 
   const { data: departments = [] } = useDepartments();
   const { data: users = [] } = useUsers();
 
-  // Инициализация react-hook-form с интерфейсом TaskCreateType
   const {
     register,
     handleSubmit,
@@ -59,14 +67,34 @@ export default function CreateTaskPage() {
     defaultValues: {
       title: "",
       description: "",
-      department_id: null,
+      departments_ids: [],
       executor_ids: [],
       attachments: [],
     },
   });
 
+  const selectedDepartments = watch("departments_ids") || [];
   const selectedExecutors = watch("executor_ids") || [];
   const attachments = watch("attachments") || [];
+
+  // Фильтруем сотрудников по выбранным отделам (если ни один отдел не выбран — показываем всех)
+  const filteredUsers = users.filter((user) => {
+    if (selectedDepartments.length === 0) return true;
+    return selectedDepartments.includes(String(user.department_id));
+  });
+
+  // Автоматический сброс исполнителей, которые не входят ни в один из выбранных отделов
+  useEffect(() => {
+    if (selectedDepartments.length === 0) return;
+
+    const validExecutorIds = selectedExecutors.filter((id) =>
+      filteredUsers.some((user) => String(user.id) === String(id)),
+    );
+
+    if (validExecutorIds.length !== selectedExecutors.length) {
+      setValue("executor_ids", validExecutorIds);
+    }
+  }, [selectedDepartments, filteredUsers, selectedExecutors, setValue]);
 
   // Переключение выбора исполнителя
   const toggleExecutor = (userId: string) => {
@@ -163,35 +191,126 @@ export default function CreateTaskPage() {
               />
             </div>
 
-            {/* Отдел */}
+            {/* Отделы (Мультиселект) */}
             <div className="space-y-2">
               <Label className="flex items-center gap-1.5">
                 <Building2 className="h-4 w-4 text-zinc-500" />
-                Отдел
+                Отделы ({selectedDepartments.length})
               </Label>
               <Controller
-                name="department_id"
+                name="departments_ids"
                 control={control}
-                render={({ field }) => (
-                  <Select
-                    value={field.value ?? "none"}
-                    onValueChange={(val) =>
-                      field.onChange(val === "none" ? null : val)
+                render={({ field }) => {
+                  const selectedIds: string[] = field.value || [];
+
+                  const toggleDept = (deptId: string) => {
+                    const current = new Set(selectedIds);
+                    if (current.has(deptId)) {
+                      current.delete(deptId);
+                    } else {
+                      current.add(deptId);
                     }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Выберите отдел" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Без отдела</SelectItem>
-                      {departments.map((dept) => (
-                        <SelectItem key={dept.id} value={String(dept.id)}>
-                          {dept.title || `Отдел #${dept.id}`}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
+                    field.onChange(Array.from(current));
+                  };
+
+                  return (
+                    <div className="space-y-2">
+                      <Popover
+                        open={openDeptSelect}
+                        onOpenChange={setOpenDeptSelect}
+                      >
+                        <PopoverTrigger>
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            className={buttonVariants({
+                              variant: "outline",
+                              size: "sm",
+                              className:
+                                "h-8 text-xs cursor-pointer inline-flex items-center justify-center",
+                            })}
+                          >
+                            {selectedIds.length === 0
+                              ? "Выберите отделы"
+                              : `Выбрано отделов: ${selectedIds.length}`}
+                            <ChevronsUpDown className="ml-1 h-3 w-3 opacity-50" />
+                          </span>
+                        </PopoverTrigger>
+                        <PopoverContent
+                          className="w-[var(--radix-popover-trigger-width)] p-0"
+                          align="start"
+                        >
+                          <Command>
+                            <CommandInput
+                              placeholder="Поиск отдела..."
+                              className="h-9 text-xs"
+                            />
+                            <CommandList>
+                              <CommandEmpty className="py-2 text-xs text-center">
+                                Отделы не найдены.
+                              </CommandEmpty>
+                              <CommandGroup>
+                                {departments.map((dept) => {
+                                  const deptIdStr = String(dept.id);
+                                  const isSelected =
+                                    selectedIds.includes(deptIdStr);
+
+                                  return (
+                                    <CommandItem
+                                      key={dept.id}
+                                      value={dept.title}
+                                      onSelect={() => toggleDept(deptIdStr)}
+                                      className="text-xs flex items-center justify-between cursor-pointer"
+                                    >
+                                      <div className="flex items-center gap-2 truncate">
+                                        <Building2 className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
+                                        <span className="truncate">
+                                          {dept.title}
+                                        </span>
+                                      </div>
+                                      <Check
+                                        className={`h-3.5 w-3.5 text-zinc-800 shrink-0 transition-opacity ${
+                                          isSelected
+                                            ? "opacity-100"
+                                            : "opacity-0"
+                                        }`}
+                                      />
+                                    </CommandItem>
+                                  );
+                                })}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+
+                      {/* Отображение бейджей выбранных отделов */}
+                      {selectedIds.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {selectedIds.map((id) => {
+                            const dept = departments.find(
+                              (d) => String(d.id) === id,
+                            );
+                            if (!dept) return null;
+                            return (
+                              <Badge
+                                key={id}
+                                variant="secondary"
+                                className="bg-zinc-100 text-zinc-700 hover:bg-zinc-200 text-xs gap-1 font-normal"
+                              >
+                                {dept.title}
+                                <X
+                                  className="h-3 w-3 cursor-pointer text-zinc-400 hover:text-zinc-700"
+                                  onClick={() => toggleDept(id)}
+                                />
+                              </Badge>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }}
               />
             </div>
 
@@ -202,12 +321,12 @@ export default function CreateTaskPage() {
                 Исполнители ({selectedExecutors.length})
               </Label>
               <div className="border border-zinc-200 rounded-lg p-3 max-h-48 overflow-y-auto space-y-2">
-                {users.length === 0 ? (
+                {filteredUsers.length === 0 ? (
                   <p className="text-xs text-zinc-400 text-center py-2">
                     Нет доступных сотрудников
                   </p>
                 ) : (
-                  users.map((user) => {
+                  filteredUsers.map((user) => {
                     const userIdStr = String(user.id);
                     const isSelected = selectedExecutors.includes(userIdStr);
                     const name = user.last_name

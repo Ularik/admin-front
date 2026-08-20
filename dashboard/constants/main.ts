@@ -16,7 +16,8 @@ import type { UserRole } from "@/types/user";
 export const roleDashboardPaths: Record<UserRole, string> = {
   ADMIN: "/admin",
   HEAD: "/heads",
-  USER: "/users",
+  DEPUTY: "/heads",
+  USER: "/employers",
 };
 
 export type DashboardMenuItem = {
@@ -47,7 +48,7 @@ export const dashboardMenuItems: DashboardMenuItem[] = [
   },
   {
     label: "Сотрудники",
-    href: "/admin/users",
+    href: "/admin/employers",
     roles: ["ADMIN"],
     icon: Plane,
   },

@@ -1,10 +1,31 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { postTask, getTasks, getTaskDetail, deleteTask } from "../requests/tasks";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  postTask,
+  getTasks,
+  getTaskDetail,
+  deleteTask,
+  putTask,
+} from "../requests/tasks";
 import { PagingParams } from "@/types/main";
 
 export const useCreateTask = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: postTask,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    },
+  });
+};
+
+export const useUpdateTask = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: putTask,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["task"] });
+    },
   });
 };
 

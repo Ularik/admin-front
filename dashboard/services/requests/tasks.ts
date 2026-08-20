@@ -2,40 +2,53 @@ import type {
   TaskCreateType,
   TasksApiResponseType,
   TaskType,
+  TaskUpdateType,
 } from "@/types/tasks";
 import axiosApi from "@/lib/axiosApi";
 import { PagingParams } from "@/types/main";
 
-export async function buildTaskFormData(
-  data: TaskCreateType,
-): Promise<FormData> {
+export function buildTaskFormData(
+  data: TaskUpdateType | TaskCreateType,
+): FormData {
   const formData = new FormData();
 
   formData.append("title", data.title);
 
-  if (data.description) {
+  if (data.description != null) {
     formData.append("description", data.description);
   }
 
-  if (data.department_id !== null && data.department_id !== undefined) {
-    formData.append("department_id", data.department_id);
+  for (const dep_id of data.departments_ids) {
+    formData.append("departments_ids", dep_id);
   }
 
-  // Для списков в FastAPI повторяем append для каждого элемента
-  data.executor_ids.forEach((id) => {
-    formData.append("executor_ids", id);
-  });
+  for (const executorId of data.executor_ids) {
+    formData.append("executor_ids", executorId);
+  }
 
-  data.attachments.forEach((file) => {
+  for (const file of data.attachments) {
     formData.append("attachments", file);
-  });
+  }
+
+    if ("old_attachments_datas" in data) {
+      data.old_attachments_datas.forEach((id) => {
+        formData.append("old_attachments_datas", id);
+      });
+    }
 
   return formData;
 }
 
 export async function postTask(data: TaskCreateType) {
-  const payload = await buildTaskFormData(data);
+  const payload = buildTaskFormData(data);
   const res = await axiosApi.post("/admin/tasks/", payload);
+  return res.data;
+}
+
+export async function putTask(data: TaskUpdateType) {
+  const { id, ...payload } = data;
+  const form = buildTaskFormData(payload);
+  const res = await axiosApi.put(`/admin/tasks/${id}`, form);
   return res.data;
 }
 

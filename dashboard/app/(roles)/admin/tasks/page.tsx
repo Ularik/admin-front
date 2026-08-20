@@ -2,20 +2,17 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import {
-  Plus,
-  FileText,
-} from "lucide-react";
+import { Plus, FileText } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-
+import { useDepartments } from "@/services/queries/departments";
 import type { TaskType } from "@/types/tasks";
 import { useTasks } from "@/services/queries/tasks";
-import TaskCard from "@/components/tasks/taskCard";
+import TaskCard from "@/components/tasks/cards/taskCard";
 import { PaginationControl } from "@/components/pagination/pagination";
-
+import TasksDepartments from "@/components/tasks/tasksDepartments";
 
 export default function TasksPage() {
   const [page, setPage] = useState(1);
@@ -24,6 +21,8 @@ export default function TasksPage() {
   const offset = (page - 1) * limit;
 
   const { data, isLoading, isError } = useTasks({ limit, offset });
+
+  const { data: departments = [] } = useDepartments();
 
   const tasks: TaskType[] = data?.items ?? [];
   const total = data?.total ?? 0;
@@ -35,7 +34,7 @@ export default function TasksPage() {
   };
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6">
+    <div className="p-6 space-y-6">
       {/* Шапка страницы */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-200 pb-5">
         <div>
@@ -77,11 +76,12 @@ export default function TasksPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-3">
-          {tasks.map((task) => (
-            <TaskCard key={task.id} task={task} />
-          ))}
-        </div>
+        <TasksDepartments tasks={tasks} departments={departments} />
+        // <div className="space-y-3">
+        //   {tasks.map((task) => (
+        //     <TaskCard key={task.id} task={task} />
+        //   ))}
+        // </div>
       )}
 
       {/* Пагинация */}
