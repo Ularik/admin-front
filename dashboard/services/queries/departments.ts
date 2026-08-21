@@ -17,6 +17,7 @@ export const useAddDepartments = () => {
       mutationFn: createDepartments,
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["departments"] });
+        queryClient.invalidateQueries({ queryKey: ["users"] });
       },
     });
 };
@@ -29,7 +30,12 @@ export const useOneDepartment = (department_id: string) => {
 };
 
 export const useUpdateDepartment = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: updateDepartment,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["departments"] });
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+    },
   });
 };

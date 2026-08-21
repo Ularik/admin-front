@@ -9,15 +9,16 @@ import {
   DepartmentCreateType,
   DepartmentUpdateType,
 } from "@/types/departments";
-import { useParams } from "next/navigation";
-import { toast } from "sonner"; 
+import { useParams, useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-
+import { useMemo } from "react";
 
 export default function DepDetail() {
   const params = useParams();
+  const router = useRouter();
+
   // Гарантируем, что id — это строка и она существует
   const id = Array.isArray(params?.id) ? params.id[0] : params?.id;
 
@@ -28,6 +29,18 @@ export default function DepDetail() {
   } = useOneDepartment(id ?? "");
 
   const { mutate: updateDep, isPending: isUpdating } = useUpdateDepartment();
+
+  // Преобразуем данные из DepartmentType в формат initialValues для формы (с ID руководителей)
+  const initialFormValues = useMemo(() => {
+    if (!department) return undefined;
+
+    return {
+      title: department.title,
+      description: department.description,
+      head_id: department.head?.id ?? null,
+      deputy_head_id: department.deputy_head?.id ?? null,
+    };
+  }, [department]);
 
   const handleUpdate = (data: DepartmentCreateType) => {
     if (!id) return;
@@ -44,8 +57,6 @@ export default function DepDetail() {
       },
     });
   };
-
-  const router = useRouter();
 
   // 1. Проверка на отсутствие ID в URL
   if (!id) {
@@ -93,7 +104,7 @@ export default function DepDetail() {
         </Button>
         <div className="block">
           <h1 className="text-2xl font-bold tracking-tight text-zinc-900">
-            Редактирование отдела
+            Редактирование отдела: {department.title}
           </h1>
           <p className="text-sm text-zinc-500">
             Измените необходимые поля и сохраните изменения.
@@ -102,7 +113,7 @@ export default function DepDetail() {
       </div>
 
       <DepartmentCreateForm
-        initialValue={department}
+        initialValue={initialFormValues}
         isPending={isUpdating}
         mutateFunc={handleUpdate}
       />

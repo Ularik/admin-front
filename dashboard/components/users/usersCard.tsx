@@ -71,9 +71,7 @@ export function EmployeeCard({ user, variant = "compact" }: EmployeeCardProps) {
     ? `${user.last_name} ${user.username}`
     : user.username;
 
-  const departmentText = user.member_department
-    ? `Отдел #${user.member_department}`
-    : "Без отдела";
+  const departmentText = user.department_title || "Без отдела";
 
   if (variant === "featured") {
     return (
@@ -96,8 +94,8 @@ export function EmployeeCard({ user, variant = "compact" }: EmployeeCardProps) {
             </div>
 
             <div className="flex items-center gap-2 mt-1 text-xs text-zinc-500">
-              <Building2 className="h-3.5 w-3.5 text-zinc-400" />
-              <span>{departmentText}</span>
+              <Building2 className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
+              <span className="truncate">{departmentText}</span>
             </div>
 
             <div className="mt-2">
@@ -126,14 +124,14 @@ export function EmployeeCard({ user, variant = "compact" }: EmployeeCardProps) {
           </h4>
 
           <div className="flex items-center justify-between gap-2 mt-1">
-            <span className="text-xs text-zinc-500 flex items-center gap-1">
-              <Building2 className="h-3 w-3 text-zinc-400" />
-              {departmentText}
+            <span className="text-xs text-zinc-500 flex items-center gap-1 min-w-0 truncate">
+              <Building2 className="h-3 w-3 text-zinc-400 shrink-0" />
+              <span className="truncate">{departmentText}</span>
             </span>
 
             <Badge
               variant="outline"
-              className={`text-[10px] px-1.5 py-0 ${config.badgeClass}`}
+              className={`text-[10px] px-1.5 py-0 shrink-0 ${config.badgeClass}`}
             >
               {config.label}
             </Badge>

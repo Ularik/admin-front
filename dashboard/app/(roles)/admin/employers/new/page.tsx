@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useForm, Controller } from "react-hook-form";
 import { ArrowLeft, UserPlus, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -26,36 +27,36 @@ import type { UserRegisterType } from "@/types/user";
 import { useRegisterMutation } from "@/services/queries/users";
 import { useDepartments } from "@/services/queries/departments";
 
-
 export default function CreateEmployeePage() {
   const router = useRouter();
   const createUser = useRegisterMutation();
   const { data: departments = [] } = useDepartments();
 
-  const [formData, setFormData] = useState<UserRegisterType>({
-    username: "",
-    last_name: "",
-    password: "",
-    status: "USER",
-    department: null,
+  const [serverError, setServerError] = useState<string | null>(null);
+
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors },
+  } = useForm<UserRegisterType>({
+    defaultValues: {
+      username: "",
+      last_name: "",
+      password: "",
+      status: "USER",
+      department_id: null,
+    },
   });
 
-  const [error, setError] = useState<string | null>(null);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-
-    if (!formData.username.trim()) {
-      setError("Имя пользователя обязательно");
-      return;
-    }
+  const onSubmit = async (data: UserRegisterType) => {
+    setServerError(null);
 
     try {
-      await createUser.mutateAsync(formData);
-      router.push("/admin/users");
+      await createUser.mutateAsync(data);
+      router.push("/admin/employers");
     } catch (err: any) {
-      setError(
+      setServerError(
         err.response?.data?.detail ||
           "Ошибка при создании сотрудника. Попробуйте снова.",
       );
@@ -93,10 +94,10 @@ export default function CreateEmployeePage() {
         </CardHeader>
 
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            {serverError && (
               <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
-                {error}
+                {serverError}
               </div>
             )}
 
@@ -106,12 +107,18 @@ export default function CreateEmployeePage() {
               <Input
                 id="username"
                 placeholder="Иван"
-                value={formData.username}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, username: e.target.value }))
-                }
-                required
+                {...register("username", {
+                  required: "Имя пользователя обязательно",
+                  validate: (val) =>
+                    val.trim().length > 0 ||
+                    "Имя не может состоять из пробелов",
+                })}
               />
+              {errors.username && (
+                <p className="text-xs text-red-500">
+                  {errors.username.message}
+                </p>
+              )}
             </div>
 
             {/* Фамилия (last_name) */}
@@ -120,13 +127,7 @@ export default function CreateEmployeePage() {
               <Input
                 id="last_name"
                 placeholder="Иванов"
-                value={formData.last_name}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    last_name: e.target.value,
-                  }))
-                }
+                {...register("last_name")}
               />
             </div>
 
@@ -137,64 +138,73 @@ export default function CreateEmployeePage() {
                 id="password"
                 type="password"
                 placeholder="••••••••"
-                value={formData.password}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, password: e.target.value }))
-                }
+                {...register("password")}
               />
             </div>
 
             {/* Роль / Статус (status) */}
             <div className="space-y-2">
               <Label>Роль в системе *</Label>
-              <Select
-                value={formData.status}
-                onValueChange={(value: UserRegisterType["status"]) =>
-                  setFormData((prev) => ({ ...prev, status: value }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Выберите роль" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="USER">Сотрудник (USER)</SelectItem>
-                  <SelectItem value="DEPUTY">
-                    Зам. начальника (DEPUTY)
-                  </SelectItem>
-                  <SelectItem value="HEAD">Начальник отдела (HEAD)</SelectItem>
-                  <SelectItem value="ADMIN">Администратор (ADMIN)</SelectItem>
-                </SelectContent>
-              </Select>
+              <Controller
+                name="status"
+                control={control}
+                rules={{ required: "Выберите роль" }}
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Выберите роль" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="USER">Сотрудник (USER)</SelectItem>
+                      <SelectItem value="DEPUTY">
+                        Зам. начальника (DEPUTY)
+                      </SelectItem>
+                      <SelectItem value="HEAD">
+                        Начальник отдела (HEAD)
+                      </SelectItem>
+                      <SelectItem value="ADMIN">
+                        Администратор (ADMIN)
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {errors.status && (
+                <p className="text-xs text-red-500">{errors.status.message}</p>
+              )}
             </div>
 
-            {/* Отдел (department) */}
+            {/* Отдел (department_id) */}
             <div className="space-y-2">
               <Label>Отдел</Label>
-              <Select
-                value={
-                  formData.department !== null
-                    ? String(formData.department)
-                    : "none"
-                }
-                onValueChange={(value) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    department: value === "none" ? null : Number(value),
-                  }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Выберите отдел" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Без отдела</SelectItem>
-                  {departments.map((dept) => (
-                    <SelectItem key={dept.id} value={String(dept.id)}>
-                      {dept.title || `Отдел #${dept.id}`}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Controller
+                name="department_id"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    value={
+                      field.value !== null && field.value !== undefined
+                        ? String(field.value)
+                        : "none"
+                    }
+                    onValueChange={(val) =>
+                      field.onChange(val === "none" ? null : val)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Выберите отдел" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Без отдела</SelectItem>
+                      {departments.map((dept) => (
+                        <SelectItem key={dept.id} value={String(dept.id)}>
+                          {dept.title || `Отдел #${dept.id}`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
             </div>
 
             {/* Кнопки действия */}
