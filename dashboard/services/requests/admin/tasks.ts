@@ -55,7 +55,7 @@ export async function putTask(data: TaskUpdateType) {
 export async function getTasks(
   params: PagingParams,
 ): Promise<TasksApiResponseType> {
-  const res = await axiosApi.get("/admin/tasks", {
+  const res = await axiosApi.get("/tasks/", {
     params: {
       limit: params.limit,
       offset: params.offset,

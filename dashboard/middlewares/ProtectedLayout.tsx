@@ -26,6 +26,15 @@ const ProtectedLayout = ({ children, roles }: Props) => {
       router.replace("/login");
       return;
     }
+    
+    if (pathname.startsWith('/admin') && user.status !== 'ADMIN') {
+        router.replace(roleDashboardPaths[user.status]);
+        return;
+    }
+
+    if (pathname.startsWith('/heads') && (user.status !== 'HEAD' && user.status !== 'ADMIN')) {
+        router.replace(roleDashboardPaths[user.status]);
+    }
 
     if (!roles.includes(user.status)) {
       const redirectPath = roleDashboardPaths[user.status] || "/login";

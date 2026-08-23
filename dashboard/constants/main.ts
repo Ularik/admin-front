@@ -52,4 +52,10 @@ export const dashboardMenuItems: DashboardMenuItem[] = [
     roles: ["ADMIN"],
     icon: Plane,
   },
+    {
+    label: "Задачи",
+    href: "/heads/tasks",
+    roles: ["HEAD"],
+    icon: Newspaper,
+  },
 ];

@@ -8,14 +8,14 @@ export interface UserType {
   username: string;
   last_name: string;
   status: UserRole;
-  department_id: number | null;
+  department_id: string | null;
 }
 
 export interface UserRegisterType {
   username: string;
   last_name: string;
   status: UserRole | null;
-  department_id: number | null;
+  department_id: string | null;
   password: string;
 }
 
@@ -23,7 +23,7 @@ export interface UserRegisterCheckType {
   username: string;
   last_name: string;
   status: UserRole | null;
-  department_id: number | null;
+  department_id: string | null;
   password: string;
   confirmPassword: string;
 }
@@ -33,7 +33,7 @@ export interface UserResponse {
   username: string;
   last_name: string;
   status: UserRole;
-  department_id: number | null;
+  department_id: string | null;
 }
 
 export interface UserWithDepartment {

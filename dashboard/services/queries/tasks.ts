@@ -5,7 +5,7 @@ import {
   getTaskDetail,
   deleteTask,
   putTask,
-} from "../requests/tasks";
+} from "../requests/admin/tasks";
 import { PagingParams } from "@/types/main";
 
 export const useCreateTask = () => {

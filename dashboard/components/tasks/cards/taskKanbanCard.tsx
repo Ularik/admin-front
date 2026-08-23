@@ -1,16 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { Building2, Users, Calendar } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Building2, Users, Calendar, Pencil } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import type { TaskType } from "@/types/tasks";
+import { useMe } from "@/services/queries/users";
 
 interface Props {
   task: TaskType;
 }
 
 export default function TaskKanbanCard({ task }: Props) {
+  const router = useRouter();
+  const { data: me } = useMe();
+
   const formatDate = (date: Date | string) => {
     return new Date(date).toLocaleDateString("ru-RU", {
       day: "2-digit",
@@ -18,21 +24,45 @@ export default function TaskKanbanCard({ task }: Props) {
     });
   };
 
+  // Проверяем, входит ли отдел текущего пользователя в список отделов задачи
+  const canEdit =
+    Boolean(me?.department_id) &&
+    task.departments?.some(
+      (dept) => String(dept.id) === String(me?.department_id)
+    );
+
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.preventDefault(); // Предотвращаем переход по родительскому Link
+    e.stopPropagation();
+    router.push(`${task.id}/edit`);
+  };
+
   return (
-    <Link href={`/admin/tasks/${task.id}`} className="block group">
-      <Card className="border-zinc-200 py-1 group-hover:border-zinc-400 group-hover:shadow-sm transition-all bg-white cursor-pointer">
+    <Link href={`${task.id}`} className="block group">
+      <Card className="border-zinc-200 py-1 group-hover:border-zinc-400 group-hover:shadow-sm transition-all bg-white cursor-pointer relative">
         <CardContent className="p-3 space-y-2.5">
-          {/* 1. Сверху: Отдел и Исполнители */}
-          <div className="flex flex-wrap items-center justify-between gap-1.5 text-xs">
-            {/* Отдел */}
-            <span className="flex items-center gap-1 font-medium text-zinc-600 bg-zinc-100 px-1.5 py-0.5 rounded text-[11px]">
+          {/* 1. Сверху: Отделы и Исполнители */}
+          <div className="flex flex-wrap items-center justify-between gap-1.5 text-xs pr-6">
+            {/* Отделы */}
+            <div className="flex flex-wrap items-center gap-1">
               <Building2 className="h-3 w-3 text-zinc-500 shrink-0" />
-              <span className="truncate max-w-[120px]">
-                {task.department_id
-                  ? `Отдел #${task.department_id}`
-                  : "Без отдела"}
-              </span>
-            </span>
+              {task.departments && task.departments.length > 0 ? (
+                <div className="flex flex-wrap gap-1">
+                  {task.departments.map((dept) => (
+                    <span
+                      key={dept.id}
+                      className="font-medium text-zinc-600 bg-zinc-100 px-1.5 py-0.5 rounded text-[11px] truncate max-w-[120px]"
+                    >
+                      {dept.title}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <span className="text-[11px] text-zinc-400 italic">
+                  Без отдела
+                </span>
+              )}
+            </div>
 
             {/* Исполнители */}
             <div className="flex items-center gap-1">
@@ -58,6 +88,19 @@ export default function TaskKanbanCard({ task }: Props) {
               )}
             </div>
           </div>
+
+          {/* Кнопка редактирования (отображается только для пользователей из отдела задачи) */}
+          {canEdit && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleEditClick}
+              className="absolute top-2 right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100"
+              title="Редактировать задачу"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </Button>
+          )}
 
           {/* 2. Заголовок задачи */}
           <h4 className="font-medium text-zinc-900 text-sm line-clamp-2 group-hover:text-zinc-700 leading-snug">
