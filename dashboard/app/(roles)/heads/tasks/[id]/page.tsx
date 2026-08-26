@@ -18,7 +18,7 @@ import {
 } from "@/services/queries/tasks";
 import { useDeleteHeadsTask, useUpdateHeadsTask } from "@/services/queries/heads/tasks";
 import { useDepartments } from "@/services/queries/departments";
-import { useUsers } from "@/services/queries/users";
+import { useMe, useUsers } from "@/services/queries/users";
 
 import type { UserWithDepartment } from "@/types/user";
 import type { DocumentLiteType } from "@/types/document";
@@ -46,8 +46,22 @@ export default function TaskDetailPage({
   const deleteTask = useDeleteHeadsTask();
   const updateTask = useUpdateHeadsTask();
 
+  const { data: me } = useMe();
+
+  if (me?.department_id === null) {
+    return (
+      <div className="p-6 max-w-4xl mx-auto space-y-6 text-center">
+        <Button variant="ghost" size="sm" onClick={() => router.back()}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Назад к списку
+        </Button>
+      </div>
+    );
+  }
+
+  const department_id = me ? me.department_id : undefined;
   const { data: departments = [] } = useDepartments();
-  const { data: users = [] } = useUsers();
+  const { data: users = [] } = useUsers(department_id);
 
   const form = useForm<TaskFormInputs>({
     defaultValues: {
@@ -102,7 +116,7 @@ export default function TaskDetailPage({
         departments_ids: data.departments_ids,
         executor_ids: data.executor_ids,
         attachments: newFiles,
-        old_attachments_datas: existingFiles.map((f) => f.id),
+        old_attachments_ids: existingFiles.map((f) => f.id),
       });
       setIsEditing(false);
     } catch (error) {

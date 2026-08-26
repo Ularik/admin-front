@@ -42,7 +42,6 @@ export function TaskExecutors({
   getUserDisplayName,
 }: TaskExecutorsProps) {
   const [open, setOpen] = useState(false);
-
   return (
     <Card className="border-zinc-200 shadow-xs">
       <CardHeader className="pb-3 border-b border-zinc-100 flex flex-row items-center justify-between space-y-0">

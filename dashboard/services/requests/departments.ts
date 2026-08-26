@@ -7,7 +7,7 @@ import type {
 } from "@/types/departments";
 
 export async function getDepartments(): Promise<DepartmentType[]> {
-  const res = await axiosApi.get("/departments");
+  const res = await axiosApi.get("/departments/");
   return res.data;
 }
 

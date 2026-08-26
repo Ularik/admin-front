@@ -27,9 +27,9 @@ export function useUserDetail(id: string) {
   });
 }
 
-export function useUsers(department_id?: number) {
+export function useUsers(department_id?: string) {
   return useQuery({
-    queryKey: ["users"],
+    queryKey: ["users", department_id],
     queryFn: () => getUsers(department_id),
   });
 }

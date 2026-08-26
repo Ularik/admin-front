@@ -21,7 +21,7 @@ export async function getMe(): Promise<UserType> {
   return res.data;
 }
 
-export async function getUsers(department_id?: number): Promise<UserWithDepartment[]> {
+export async function getUsers(department_id?: string): Promise<UserWithDepartment[]> {
   const res = await axiosApi.get("users/", {
     params: {
       department_id,
