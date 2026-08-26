@@ -14,10 +14,10 @@ import { TaskMainInfo } from "@/components/tasks/taskUpdate/taskMainInfo";
 import { TaskExecutors } from "@/components/tasks/taskUpdate/taskExecutors";
 
 import {
-  useTaskDetail,
-  useDeleteTaskMutation,
-  useUpdateTask,
-} from "@/services/queries/tasks";
+  useDeleteAdminTask,
+  useUpdateAdminTask,
+} from "@/services/queries/admin/tasks";
+import { useTaskDetail } from "@/services/queries/tasks";
 import { useDepartments } from "@/services/queries/departments";
 import { useUsers } from "@/services/queries/users";
 
@@ -44,8 +44,8 @@ export default function TaskDetailPage({
   const [newFiles, setNewFiles] = useState<File[]>([]);
 
   const { data: task, isLoading, isError } = useTaskDetail(id);
-  const deleteTask = useDeleteTaskMutation();
-  const updateTask = useUpdateTask();
+  const deleteTask = useDeleteAdminTask();
+  const updateTask = useUpdateAdminTask();
 
   const { data: departments = [] } = useDepartments();
   const { data: users = [] } = useUsers();
@@ -103,7 +103,7 @@ export default function TaskDetailPage({
         departments_ids: data.departments_ids,
         executor_ids: data.executor_ids,
         attachments: newFiles,
-        old_attachments_datas: existingFiles.map((f) => f.id),
+        old_attachments_ids: existingFiles.map((f) => f.id),
       });
       setIsEditing(false);
     } catch (error) {
@@ -114,7 +114,7 @@ export default function TaskDetailPage({
   const handleDelete = async () => {
     try {
       await deleteTask.mutateAsync(id);
-      router.push("/tasks");
+      router.push("/admin/tasks");
     } catch (error) {
       console.error("Ошибка удаления:", error);
     }

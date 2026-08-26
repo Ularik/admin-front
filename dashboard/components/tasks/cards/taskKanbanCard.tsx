@@ -26,15 +26,17 @@ export default function TaskKanbanCard({ task }: Props) {
 
   // Проверяем, входит ли отдел текущего пользователя в список отделов задачи
   const canEdit =
-    Boolean(me?.department_id) &&
-    task.departments?.some(
-      (dept) => String(dept.id) === String(me?.department_id)
-    );
+    me?.status === "ADMIN" ||
+    (Boolean(me?.department_id) &&
+      task.departments?.some(
+        (dept) => String(dept.id) === String(me?.department_id),
+      ) &&
+      task.departments?.length === 1);
 
   const handleEditClick = (e: React.MouseEvent) => {
     e.preventDefault(); // Предотвращаем переход по родительскому Link
     e.stopPropagation();
-    router.push(`${task.id}/edit`);
+    router.push(`tasks/${task.id}/`);
   };
 
   return (

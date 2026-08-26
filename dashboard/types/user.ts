@@ -11,6 +11,13 @@ export interface UserType {
   department_id: string | null;
 }
 
+export interface UserUpdateType {
+  username: string | null;
+  last_name: string | null;
+  status: UserRole | null;
+  department_id: string | null;
+}
+
 export interface UserRegisterType {
   username: string;
   last_name: string;

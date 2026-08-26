@@ -17,7 +17,7 @@ export interface TaskUpdateType {
   departments_ids: string[];
   executor_ids: string[];
   attachments: File[];
-  old_attachments_datas: string[];
+  old_attachments_ids: string[];
 }
 
 export interface TaskType {

@@ -6,6 +6,7 @@ import type {
   UserRegisterType,
   UserResponse,
   LoginFormData,
+  UserUpdateType,
 } from "@/types/user";
 
 export async function registerUser(
@@ -37,5 +38,15 @@ export async function login(body: LoginFormData) {
 
 export async function logout() {
   const res = await axiosApi.post("/users/logout");
+  return res.data;
+}
+
+export async function userUpdate({ id, data }: { id: string, data: UserUpdateType }): Promise<UserType> {
+    const res = await axiosApi.patch(`/users/${id}`, data);
+    return res.data;
+}
+
+export async function userDetail(id: string) {
+  const res = await axiosApi.get(`/users/${id}`);
   return res.data;
 }

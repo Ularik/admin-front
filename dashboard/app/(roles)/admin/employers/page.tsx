@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   UserPlus,
   Crown,
@@ -34,6 +35,7 @@ const STATUS_PRIORITY: Record<string, number> = {
 };
 
 export default function EmployeesPage() {
+  const router = useRouter();
   const { data: users = [], isLoading, isError } = useUsers();
   const [search, setSearch] = useState("");
 
@@ -60,7 +62,6 @@ export default function EmployeesPage() {
     return filteredUsers.filter((u) => !(u.status in STATUS_PRIORITY));
   }, [filteredUsers]);
 
-  // Группировка обычных сотрудников по department_id с отображением department_title
   const employeesByDepartment = useMemo(() => {
     const groups: Record<
       string,
@@ -161,8 +162,8 @@ export default function EmployeesPage() {
           </div>
         </div>
 
-        {/* Отделы и сотрудники (Правая секция) */}
-        <div className="lg:col-span-8 space-y-4">
+        {/* Отделы и сотрудники (Правая горизонтальная секция) */}
+        <div className="lg:col-span-8 space-y-4 min-w-0">
           <div className="flex items-center gap-2 px-1">
             <UserCheck className="h-5 w-5 text-zinc-600" />
             <h2 className="text-lg font-semibold text-zinc-900">
@@ -180,19 +181,22 @@ export default function EmployeesPage() {
               </CardContent>
             </Card>
           ) : (
-            /* Колонки отделов */
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+            /* Горизонтальный скролл для колонок отделов */
+            <div className="flex gap-4 overflow-x-auto pb-4 pt-1 snap-x scrollbar-thin scrollbar-thumb-zinc-300">
               {Object.entries(employeesByDepartment).map(
                 ([deptId, { title, users: deptUsers }]) => (
-                  <div key={deptId} className="space-y-3">
+                  <div
+                    key={deptId}
+                    className="w-72 shrink-0 space-y-3 snap-start"
+                  >
                     <div className="flex items-center gap-2 pb-1 border-b border-zinc-200">
-                      <Building2 className="h-4 w-4 text-zinc-500" />
-                      <h3 className="font-medium text-sm text-zinc-700">
+                      <Building2 className="h-4 w-4 text-zinc-500 shrink-0" />
+                      <h3 className="font-medium text-sm text-zinc-700 truncate">
                         {title}
                       </h3>
                       <Badge
                         variant="outline"
-                        className="ml-auto text-xs font-mono"
+                        className="ml-auto text-xs font-mono shrink-0"
                       >
                         {deptUsers.length}
                       </Badge>
@@ -228,16 +232,16 @@ function EmployeesSkeleton() {
           <div className="h-24 bg-zinc-200 rounded-lg" />
           <div className="h-24 bg-zinc-200 rounded-lg" />
         </div>
-        <div className="lg:col-span-8 space-y-3">
+        <div className="lg:col-span-8 space-y-3 min-w-0">
           <div className="h-6 bg-zinc-200 rounded w-1/4 mb-4" />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <div className="h-5 bg-zinc-200 rounded w-1/3 mb-2" />
+          <div className="flex gap-4 overflow-hidden">
+            <div className="w-72 shrink-0 space-y-2">
+              <div className="h-5 bg-zinc-200 rounded w-1/2 mb-2" />
               <div className="h-20 bg-zinc-200 rounded-lg" />
               <div className="h-20 bg-zinc-200 rounded-lg" />
             </div>
-            <div className="space-y-2">
-              <div className="h-5 bg-zinc-200 rounded w-1/3 mb-2" />
+            <div className="w-72 shrink-0 space-y-2">
+              <div className="h-5 bg-zinc-200 rounded w-1/2 mb-2" />
               <div className="h-20 bg-zinc-200 rounded-lg" />
             </div>
           </div>

@@ -43,13 +43,13 @@ import {
 } from "@/components/ui/command";
 
 import type { TaskCreateType } from "@/types/tasks";
-import { useCreateTask } from "@/services/queries/tasks";
+import { useCreateAdminTask } from "@/services/queries/admin/tasks";
 import { useDepartments } from "@/services/queries/departments";
 import { useUsers } from "@/services/queries/users";
 
 export default function CreateTaskPage() {
   const router = useRouter();
-  const createTask = useCreateTask();
+  const createTask = useCreateAdminTask();
   const [serverError, setServerError] = useState<string | null>(null);
   const [openDeptSelect, setOpenDeptSelect] = useState(false);
 

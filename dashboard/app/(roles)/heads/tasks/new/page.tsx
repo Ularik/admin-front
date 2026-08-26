@@ -31,13 +31,13 @@ import {
 } from "@/components/ui/card";
 
 import type { TaskCreateType } from "@/types/tasks";
-import { useCreateTask } from "@/services/queries/tasks";
+import { useCreateHeadsTask } from "@/services/queries/heads/tasks";
 import { useUsers, useMe } from "@/services/queries/users";
 import { useDepartments } from "@/services/queries/departments"; // Импортируйте ваш хук получения отделов
 
 export default function CreateTaskHeadsPage() {
   const router = useRouter();
-  const createTask = useCreateTask();
+  const createTask = useCreateHeadsTask();
   const { data: me, isLoading: isMeLoading } = useMe();
   const { data: departments = [], isLoading: isDepartmentsLoading } = useDepartments();
   const { data: users = [] } = useUsers();

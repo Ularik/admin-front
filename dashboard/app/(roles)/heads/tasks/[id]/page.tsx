@@ -15,9 +15,8 @@ import { TaskExecutors } from "@/components/tasks/taskUpdate/taskExecutors";
 
 import {
   useTaskDetail,
-  useDeleteTaskMutation,
-  useUpdateTask,
 } from "@/services/queries/tasks";
+import { useDeleteHeadsTask, useUpdateHeadsTask } from "@/services/queries/heads/tasks";
 import { useDepartments } from "@/services/queries/departments";
 import { useUsers } from "@/services/queries/users";
 
@@ -44,8 +43,8 @@ export default function TaskDetailPage({
   const [newFiles, setNewFiles] = useState<File[]>([]);
 
   const { data: task, isLoading, isError } = useTaskDetail(id);
-  const deleteTask = useDeleteTaskMutation();
-  const updateTask = useUpdateTask();
+  const deleteTask = useDeleteHeadsTask();
+  const updateTask = useUpdateHeadsTask();
 
   const { data: departments = [] } = useDepartments();
   const { data: users = [] } = useUsers();
@@ -114,7 +113,7 @@ export default function TaskDetailPage({
   const handleDelete = async () => {
     try {
       await deleteTask.mutateAsync(id);
-      router.push("/tasks");
+      router.push("/heads/tasks");
     } catch (error) {
       console.error("Ошибка удаления:", error);
     }

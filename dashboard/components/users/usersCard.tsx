@@ -1,10 +1,20 @@
 "use client";
 
-import { Crown, Shield, ShieldCheck, UserCheck, Building2 } from "lucide-react";
+import {
+  Crown,
+  Shield,
+  ShieldCheck,
+  UserCheck,
+  Building2,
+  Pencil,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import type { UserWithDepartment } from "@/types/user";
+import { useMe } from "@/services/queries/users";
+import Link from "next/link";
 
 export const STATUS_CONFIG: Record<
   string,
@@ -59,9 +69,15 @@ interface EmployeeCardProps {
   variant?: "featured" | "compact";
 }
 
-export function EmployeeCard({ user, variant = "compact" }: EmployeeCardProps) {
+export function EmployeeCard({
+  user,
+  variant = "compact",
+}: EmployeeCardProps) {
   const config = STATUS_CONFIG[user.status] || STATUS_CONFIG.USER;
   const StatusIcon = config.icon;
+  const { data: me } = useMe();
+
+  const canEdit = me?.status === "ADMIN" || me?.status === "HEAD";
 
   const initials =
     ((user.username?.[0] || "") + (user.last_name?.[0] || "")).toUpperCase() ||
@@ -76,7 +92,7 @@ export function EmployeeCard({ user, variant = "compact" }: EmployeeCardProps) {
   if (variant === "featured") {
     return (
       <Card
-        className={`shadow-xs hover:shadow-md transition-shadow ${config.cardClass}`}
+        className={`relative shadow-xs hover:shadow-md transition-shadow ${config.cardClass}`}
       >
         <CardContent className="p-4 flex items-center gap-4">
           <Avatar
@@ -90,7 +106,16 @@ export function EmployeeCard({ user, variant = "compact" }: EmployeeCardProps) {
               <h3 className="font-semibold text-zinc-900 truncate">
                 {fullName}
               </h3>
-              <StatusIcon className={`h-4 w-4 shrink-0 ${config.iconClass}`} />
+              <div className="flex items-center gap-1.5 shrink-0">
+                <StatusIcon className={`h-4 w-4 ${config.iconClass}`} />
+                {canEdit && (
+                  <Link
+                    href={`employers/${user.id}`}
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Link>
+                )}
+              </div>
             </div>
 
             <div className="flex items-center gap-2 mt-1 text-xs text-zinc-500">
@@ -119,9 +144,16 @@ export function EmployeeCard({ user, variant = "compact" }: EmployeeCardProps) {
         </Avatar>
 
         <div className="flex-1 min-w-0">
-          <h4 className="font-medium text-sm text-zinc-900 truncate">
-            {fullName}
-          </h4>
+          <div className="flex items-center justify-between gap-2">
+            <h4 className="font-medium text-sm text-zinc-900 truncate">
+              {fullName}
+            </h4>
+            {canEdit && (
+              <Link href={`employers/${user.id}`}>
+                <Pencil className="h-3.5 w-3.5" />
+              </Link>
+            )}
+          </div>
 
           <div className="flex items-center justify-between gap-2 mt-1">
             <span className="text-xs text-zinc-500 flex items-center gap-1 min-w-0 truncate">
