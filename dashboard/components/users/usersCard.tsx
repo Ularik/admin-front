@@ -77,7 +77,8 @@ export function EmployeeCard({
   const StatusIcon = config.icon;
   const { data: me } = useMe();
 
-  const canEdit = me?.status === "ADMIN" || me?.status === "HEAD";
+  const canEdit = me?.status === "ADMIN" || 
+  (me?.status === "HEAD" && me?.department_id == user.department_id);
 
   const initials =
     ((user.username?.[0] || "") + (user.last_name?.[0] || "")).toUpperCase() ||
@@ -110,7 +111,7 @@ export function EmployeeCard({
                 <StatusIcon className={`h-4 w-4 ${config.iconClass}`} />
                 {canEdit && (
                   <Link
-                    href={`employers/${user.id}`}
+                    href={`${user.id}`}
                   >
                     <Pencil className="h-3.5 w-3.5" />
                   </Link>
@@ -149,7 +150,7 @@ export function EmployeeCard({
               {fullName}
             </h4>
             {canEdit && (
-              <Link href={`employers/${user.id}`}>
+              <Link href={`executors/${user.id}`}>
                 <Pencil className="h-3.5 w-3.5" />
               </Link>
             )}

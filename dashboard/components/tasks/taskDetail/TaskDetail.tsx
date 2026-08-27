@@ -2,14 +2,37 @@
 
 import { use, useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
-import { Calendar, Clock, AlertTriangle, ArrowLeft, Lock } from "lucide-react";
+import { buttonVariants, Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  Calendar,
+  Clock,
+  AlertTriangle,
+  ArrowLeft,
+  Lock,
+  Trash2,
+  Loader2,
+  Pencil,
+  X,
+  Check,
+  MessageSquarePlus,
+} from "lucide-react";
 
-import { TaskHeader } from "@/components/tasks/taskUpdate/taskHeader";
 import { TaskMainInfo } from "@/components/tasks/taskUpdate/taskMainInfo";
 import { TaskExecutors } from "@/components/tasks/taskUpdate/taskExecutors";
 
@@ -36,6 +59,8 @@ interface TaskDetailPageProps {
   isUpdating?: boolean;
   isDeleting?: boolean;
   redirectAfterDeletePath?: string;
+  // Параметр для гибкого построения ссылки на страницу ответа (если нужно использовать разные префиксы роутов)
+  replyBasePath?: string;
 }
 
 export default function TaskDetail({
@@ -46,6 +71,7 @@ export default function TaskDetail({
   isUpdating = false,
   isDeleting = false,
   redirectAfterDeletePath = "/heads/tasks",
+  replyBasePath = "/heads/tasks",
 }: TaskDetailPageProps) {
   const { id } = use(params);
   const router = useRouter();
@@ -60,19 +86,14 @@ export default function TaskDetail({
   const { data: departments = [] } = useDepartments();
   const { data: users = [] } = useUsers(user?.department_id ?? undefined);
 
-  // Строгая проверка прав на редактирование:
-  // 1. Админ может всё.
-  // 2. Не админ может редактировать ТОЛЬКО если у задачи ровно 1 отдел и он совпадает с отделом пользователя.
+  // Права на редактирование
   const canEdit = useMemo(() => {
     if (!user || !task) return false;
     if (user.status === "ADMIN") return true;
 
     const taskDepartments = task.departments || [];
-
-    // Если у задачи несколько отделов или нет ни одного — только админ
     if (taskDepartments.length !== 1) return false;
 
-    // Строгое сравнение с единственным отделом задачи
     const taskDeptId = String(taskDepartments[0].id);
     return Boolean(userDeptId && taskDeptId === userDeptId);
   }, [user, task, userDeptId]);
@@ -125,7 +146,7 @@ export default function TaskDetail({
   const onSubmit = async (data: TaskFormInputs) => {
     if (!canEdit) return;
     try {
-      await updateTaskFunc({
+      updateTaskFunc({
         id,
         title: data.title.trim(),
         description: data.description.trim() || null,
@@ -215,15 +236,117 @@ export default function TaskDetail({
         </div>
       )}
 
-      <TaskHeader
-        canEdit={canEdit}
-        isEditing={isEditing && canEdit}
-        isUpdating={isUpdating}
-        isDeleting={isDeleting}
-        onEditToggle={canEdit ? setIsEditing : () => {}}
-        onCancel={handleCancel}
-        onDelete={canEdit ? handleDelete : () => {}}
-      />
+      {/* Встроенная Шапка (TaskHeader) */}
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => router.back()}
+          className="text-zinc-600 hover:text-zinc-900"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />К списку задач
+        </Button>
+
+        <div className="flex items-center gap-2">
+          {/* Кнопка создания ответа доступна всегда, когда форма не в режиме редактирования */}
+          {!isEditing && (
+            <Link
+              href={`${replyBasePath}/${id}/reply`}
+              className={buttonVariants({
+                variant: "default",
+                size: "sm",
+                className: "bg-zinc-900 text-white hover:bg-zinc-800",
+              })}
+            >
+              <MessageSquarePlus className="h-4 w-4 mr-2" />
+              Отправить ответ
+            </Link>
+          )}
+
+          {canEdit && (
+            <>
+              {!isEditing ? (
+                <>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsEditing(true)}
+                    className="text-zinc-700 border-zinc-300"
+                  >
+                    <Pencil className="h-4 w-4 mr-2" />
+                    Редактировать
+                  </Button>
+
+                  <AlertDialog>
+                    <AlertDialogTrigger
+                      className={buttonVariants({
+                        variant: "outline",
+                        size: "sm",
+                        className:
+                          "text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700",
+                      })}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Удалить
+                    </AlertDialogTrigger>
+
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Удалить задачу?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Это действие нельзя отменить. Задача будет
+                          безвозвратно удалена из системы.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Отмена</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={handleDelete}
+                          disabled={isDeleting}
+                          className="bg-red-600 hover:bg-red-700 text-white"
+                        >
+                          {isDeleting && (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          )}
+                          Удалить
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </>
+              ) : (
+                <>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleCancel}
+                    disabled={isUpdating}
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Отмена
+                  </Button>
+                  <Button
+                    type="submit"
+                    size="sm"
+                    disabled={isUpdating}
+                    className="bg-zinc-900 text-white hover:bg-zinc-800"
+                  >
+                    {isUpdating ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Check className="h-4 w-4 mr-2" />
+                    )}
+                    Сохранить
+                  </Button>
+                </>
+              )}
+            </>
+          )}
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
