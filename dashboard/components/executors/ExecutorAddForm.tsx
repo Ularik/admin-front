@@ -23,11 +23,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import type { UserRegisterType } from "@/types/user";
+import type { UserRegisterType, UserType } from "@/types/user";
 import { useRegisterMutation } from "@/services/queries/users";
 import { useDepartments } from "@/services/queries/departments";
 
-export default function CreateEmployeePage() {
+interface Props {
+    head?: UserType
+}
+
+export default function ExecutorAddForm({ head }: Props) {
   const router = useRouter();
   const createUser = useRegisterMutation();
   const { data: departments = [] } = useDepartments();
@@ -45,7 +49,7 @@ export default function CreateEmployeePage() {
       last_name: "",
       password: "",
       status: "USER",
-      department_id: null,
+      department_id: head? head.department_id : null,
     },
   });
 
@@ -54,7 +58,7 @@ export default function CreateEmployeePage() {
 
     try {
       await createUser.mutateAsync(data);
-      router.push("/admin/employers");
+      router.back();
     } catch (err: any) {
       setServerError(
         err.response?.data?.detail ||
@@ -143,69 +147,75 @@ export default function CreateEmployeePage() {
             </div>
 
             {/* Роль / Статус (status) */}
-            <div className="space-y-2">
-              <Label>Роль в системе *</Label>
-              <Controller
-                name="status"
-                control={control}
-                rules={{ required: "Выберите роль" }}
-                render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Выберите роль" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="USER">Сотрудник (USER)</SelectItem>
-                      <SelectItem value="DEPUTY">
-                        Зам. начальника (DEPUTY)
-                      </SelectItem>
-                      <SelectItem value="HEAD">
-                        Начальник отдела (HEAD)
-                      </SelectItem>
-                      <SelectItem value="ADMIN">
-                        Администратор (ADMIN)
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+            {!head && (
+              <div className="space-y-2">
+                <Label>Роль в системе *</Label>
+                <Controller
+                  name="status"
+                  control={control}
+                  rules={{ required: "Выберите роль" }}
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Выберите роль" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="USER">Сотрудник (USER)</SelectItem>
+                        <SelectItem value="DEPUTY">
+                          Зам. начальника (DEPUTY)
+                        </SelectItem>
+                        <SelectItem value="HEAD">
+                          Начальник отдела (HEAD)
+                        </SelectItem>
+                        <SelectItem value="ADMIN">
+                          Администратор (ADMIN)
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {errors.status && (
+                  <p className="text-xs text-red-500">
+                    {errors.status.message}
+                  </p>
                 )}
-              />
-              {errors.status && (
-                <p className="text-xs text-red-500">{errors.status.message}</p>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Отдел (department_id) */}
-            <div className="space-y-2">
-              <Label>Отдел</Label>
-              <Controller
-                name="department_id"
-                control={control}
-                render={({ field }) => (
-                  <Select
-                    value={
-                      field.value !== null && field.value !== undefined
-                        ? String(field.value)
-                        : "none"
-                    }
-                    onValueChange={(val) =>
-                      field.onChange(val === "none" ? null : val)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Выберите отдел" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Без отдела</SelectItem>
-                      {departments.map((dept) => (
-                        <SelectItem key={dept.id} value={String(dept.id)}>
-                          {dept.title || `Отдел #${dept.id}`}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-            </div>
+            {!head && (
+              <div className="space-y-2">
+                <Label>Отдел</Label>
+                <Controller
+                  name="department_id"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      value={
+                        field.value !== null && field.value !== undefined
+                          ? String(field.value)
+                          : "none"
+                      }
+                      onValueChange={(val) =>
+                        field.onChange(val === "none" ? null : val)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Выберите отдел" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Без отдела</SelectItem>
+                        {departments.map((dept) => (
+                          <SelectItem key={dept.id} value={String(dept.id)}>
+                            {dept.title || `Отдел #${dept.id}`}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </div>
+            )}
 
             {/* Кнопки действия */}
             <div className="flex justify-end gap-3 pt-4 border-t border-zinc-100">

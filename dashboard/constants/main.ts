@@ -48,14 +48,26 @@ export const dashboardMenuItems: DashboardMenuItem[] = [
   },
   {
     label: "Сотрудники",
-    href: "/admin/employers",
+    href: "/admin/executors",
     roles: ["ADMIN"],
     icon: Plane,
   },
-    {
+  {
     label: "Задачи",
     href: "/heads/tasks",
     roles: ["HEAD"],
     icon: Newspaper,
+  },
+  {
+    label: "Сотрудники",
+    href: "/heads/executors",
+    roles: ["HEAD"],
+    icon: Plane,
+  },
+  {
+    label: "Сотрудники моего отдела",
+    href: "/heads/myexecutors",
+    roles: ["HEAD"],
+    icon: Plane,
   },
 ];

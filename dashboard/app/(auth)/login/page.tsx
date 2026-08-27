@@ -1,9 +1,7 @@
 "use client";
 
 import { useForm } from "react-hook-form";
-import { useMutation } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,11 +12,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { LoginFormData, UserResponse } from "@/types/user";
+import type { LoginFormData } from "@/types/user";
 import { useLogin } from "@/services/queries/users";
 import { useRouter } from "next/navigation";
 import { roleDashboardPaths } from "@/constants/main";
-
 
 export default function LoginPage() {
   const {
@@ -38,7 +35,7 @@ export default function LoginPage() {
   function onSubmit(values: LoginFormData) {
     login(values, {
       onSuccess: () => {
-        router.push("/users");
+        router.push("/admin");
       },
     });
   }

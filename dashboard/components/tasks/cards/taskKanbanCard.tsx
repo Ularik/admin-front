@@ -40,7 +40,7 @@ export default function TaskKanbanCard({ task }: Props) {
   };
 
   return (
-    <Link href={`${task.id}`} className="block group">
+    <Link href={`tasks/${task.id}`} className="block group">
       <Card className="border-zinc-200 py-1 group-hover:border-zinc-400 group-hover:shadow-sm transition-all bg-white cursor-pointer relative">
         <CardContent className="p-3 space-y-2.5">
           {/* 1. Сверху: Отделы и Исполнители */}

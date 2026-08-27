@@ -23,7 +23,7 @@ const Sidebar = () => {
 
   const handleLogout = async () => {
     try {
-      await logoutMutation.mutateAsync();
+      logoutMutation.mutate();
     } catch {
       toast.error("Не удалось завершить сессию на сервере");
     } finally {

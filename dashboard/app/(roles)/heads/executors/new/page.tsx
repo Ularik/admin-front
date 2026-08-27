@@ -1,30 +1,16 @@
 "use client";
 
-import CreateTaskForm from "@/components/tasks/createTask/CreateTaskForm";
-import { useMe } from "@/services/queries/users";
 import { AlertCircle, ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import ExecutorAddForm from "@/components/executors/ExecutorAddForm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { useCreateHeadsTask } from "@/services/queries/heads/tasks";
-import { TaskCreateType } from "@/types/tasks";
-import { useRouter } from "next/navigation";
+import { useMe } from "@/services/queries/users";
 
+export default function ExecutorAddPage() {
+  const { data: me, isLoading } = useMe();
 
-export default function HeadsTaskAddPage() {
-  const router = useRouter();
-  const { data: me, isPending } = useMe();
-  const taskCreate = useCreateHeadsTask();
-
-  const sumbit = (data: TaskCreateType) => {
-    taskCreate.mutate(data, {
-      onSuccess: () => {
-        router.back();
-      }
-    });
-  }
-
-  if (isPending) {
+  if (isLoading) {
     return <ExecutorAddSkeleton />;
   }
 
@@ -42,9 +28,8 @@ export default function HeadsTaskAddPage() {
                 Отдел не привязан
               </h2>
               <p className="text-sm text-zinc-600 leading-relaxed">
-                Вы не можете добавить задачу, так как за вашим аккаунтом
-                не закреплен отдел. Обратитесь в поддержку или к
-                администратору.
+                Вы не можете добавить сотрудника, так как за вашим аккаунтом не
+                закреплен отдел. Обратитесь в поддержку или к администратору.
               </p>
             </div>
 
@@ -62,15 +47,7 @@ export default function HeadsTaskAddPage() {
     );
   }
 
-  return (
-    <>
-      <CreateTaskForm
-        user={me}
-        submitFunc={sumbit}
-        isPending={taskCreate.isPending}
-      />
-    </>
-  );
+  return <ExecutorAddForm head={me} />;
 }
 
 function ExecutorAddSkeleton() {

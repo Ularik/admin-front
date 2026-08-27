@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   UserPlus,
   Crown,
@@ -34,8 +33,14 @@ const STATUS_PRIORITY: Record<string, number> = {
   DEPUTY: 3,
 };
 
-export default function EmployeesPage() {
-  const router = useRouter();
+interface ExecutorsViewProps {
+  /** Разрешить ли отображение кнопки "Добавить" */
+  canAdd?: boolean;
+}
+
+export default function ExecutorsView({
+  canAdd = true,
+}: ExecutorsViewProps) {
   const { data: users = [], isLoading, isError } = useUsers();
   const [search, setSearch] = useState("");
 
@@ -121,13 +126,15 @@ export default function EmployeesPage() {
             />
           </div>
 
-          {/* Кнопка добавления */}
-          <Link href="/admin/employers/new">
-            <Button className="bg-zinc-900 hover:bg-zinc-800 text-white shrink-0">
-              <UserPlus className="h-4 w-4 mr-2" />
-              Добавить
-            </Button>
-          </Link>
+          {/* Кнопка добавления по условию */}
+          {canAdd && (
+            <Link href={`executors/new`}>
+              <Button className="bg-zinc-900 hover:bg-zinc-800 text-white shrink-0">
+                <UserPlus className="h-4 w-4 mr-2" />
+                Добавить
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
 
@@ -162,7 +169,7 @@ export default function EmployeesPage() {
           </div>
         </div>
 
-        {/* Отделы и сотрудники (Правая горизонтальная секция) */}
+        {/* Отделы и сотрудники */}
         <div className="lg:col-span-8 space-y-4 min-w-0">
           <div className="flex items-center gap-2 px-1">
             <UserCheck className="h-5 w-5 text-zinc-600" />
@@ -181,7 +188,6 @@ export default function EmployeesPage() {
               </CardContent>
             </Card>
           ) : (
-            /* Горизонтальный скролл для колонок отделов */
             <div className="flex gap-4 overflow-x-auto pb-4 pt-1 snap-x scrollbar-thin scrollbar-thumb-zinc-300">
               {Object.entries(employeesByDepartment).map(
                 ([deptId, { title, users: deptUsers }]) => (
