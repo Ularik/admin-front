@@ -8,11 +8,13 @@ import {
 } from "@/services/queries/admin/tasks";
 import { Skeleton } from "@/components/ui/skeleton";
 
+interface Props {
+  params: Promise<{ id: string }>
+}
+
 export default function TaskAdminDetailPage({
   params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+}: Props) {
   const { data: me, isLoading: isMeLoading } = useMe();
   const updateTask = useUpdateAdminTask();
   const deleteTask = useDeleteAdminTask();

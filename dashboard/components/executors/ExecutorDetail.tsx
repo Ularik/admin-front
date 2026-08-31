@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useForm, Controller } from "react-hook-form";
-import { ArrowLeft, UserCheck, Loader2 } from "lucide-react";
+import { ArrowLeft, UserCheck, Loader2, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,30 +21,51 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
-import type { UserUpdateType } from "@/types/user";
-import { useUserDetail, useUserUpdate } from "@/services/queries/users";
+import type { UserUpdateType, UserType } from "@/types/user";
 import { useDepartments } from "@/services/queries/departments";
+import { AxiosError } from "axios";
 
-export default function ExecutorDetail() {
+
+interface Props {
+  user: UserType;
+  isUpdating: boolean;
+  handleUpdate: ({id, data}: {id: string; data: UserUpdateType}) => void;
+  isDeleting: boolean;
+  handleDelete: (id: string) => void;
+  serverError: AxiosError<{ detail: string }> | null;
+}
+
+export default function ExecutorDetail({ 
+  user, 
+  isUpdating,
+  handleUpdate,
+  isDeleting, 
+  handleDelete, 
+  serverError 
+}: Props) {
+
   const router = useRouter();
-  const params = useParams();
-  const userId = params.id as string;
-
-  const { data: user, isLoading: isUserLoading } = useUserDetail(userId);
-  const updateUser = useUserUpdate();
   const { data: departments = [] } = useDepartments();
-
-  const [serverError, setServerError] = useState<string | null>(null);
 
   const {
     register,
     handleSubmit,
     control,
-    reset,
     formState: { errors, isDirty },
   } = useForm<UserUpdateType>({
-    defaultValues: {
+    defaultValues: user || {
       username: "",
       last_name: "",
       status: "USER",
@@ -53,39 +73,10 @@ export default function ExecutorDetail() {
     },
   });
 
-  // Заполняем форму, когда данные пользователя загрузились
-  useEffect(() => {
-    if (user) {
-      reset({
-        username: user.username || "",
-        last_name: user.last_name || "",
-        status: user.status || "USER",
-        department_id: user.department_id ? String(user.department_id) : null,
-      });
-    }
-  }, [user, reset]);
-
-  const onSubmit = async (data: UserUpdateType) => {
-    setServerError(null);
-
-    try {
-      await updateUser.mutateAsync({ id: userId, data });
-      router.back();
-    } catch (err: any) {
-      setServerError(
-        err.response?.data?.detail ||
-          "Ошибка при обновлении сотрудника. Попробуйте снова.",
-      );
-    }
+  const onSubmit = (data: UserUpdateType) => {
+    handleUpdate({ id: user.id, data });
   };
 
-  if (isUserLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-zinc-500" />
-      </div>
-    );
-  }
 
   return (
     <div className="p-6 max-w-2xl mx-auto space-y-6">
@@ -107,21 +98,57 @@ export default function ExecutorDetail() {
       </div>
 
       <Card className="border-zinc-200 shadow-xs">
-        <CardHeader>
-          <CardTitle className="text-xl flex items-center gap-2">
-            <UserCheck className="h-5 w-5 text-zinc-700" />
-            Редактирование сотрудника
-          </CardTitle>
-          <CardDescription>
-            Измените персональные данные, статус или привязку к отделу
-          </CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+          <div className="space-y-1">
+            <CardTitle className="text-xl flex items-center gap-2">
+              <UserCheck className="h-5 w-5 text-zinc-700" />
+              Редактирование сотрудника
+            </CardTitle>
+            <CardDescription>
+              Измените персональные данные, статус или привязку к отделу
+            </CardDescription>
+          </div>
+
+          {/* Диалог подтверждения удаления */}
+          <AlertDialog>
+            <AlertDialogTrigger render={
+              <Button variant="destructive" 
+              size="icon" 
+              disabled={isDeleting || isUpdating} />
+              }>
+                {isDeleting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4" />
+                )}
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Удалить сотрудника?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Это действие нельзя отменить. Пользователь{" "}
+                  <strong className="text-zinc-900">{user?.username}</strong>{" "}
+                  будет навсегда удален из системы.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Отмена</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => handleDelete(user.id)}
+                  className="bg-red-600 text-white hover:bg-red-700"
+                >
+                  Удалить
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </CardHeader>
 
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             {serverError && (
               <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
-                {serverError}
+                {serverError.response?.data.detail || "Ошибка при обновлении данных. Попробуйте снова."}
               </div>
             )}
 
@@ -235,10 +262,10 @@ export default function ExecutorDetail() {
               </Button>
               <Button
                 type="submit"
-                disabled={updateUser.isPending || !isDirty}
+                disabled={isUpdating || isDeleting || !isDirty}
                 className="bg-zinc-900 text-white hover:bg-zinc-800"
               >
-                {updateUser.isPending && (
+                {isUpdating && (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 )}
                 Сохранить изменения

@@ -1,6 +1,11 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMutation } from "@tanstack/react-query";
-import { registerUser, login, getMe, logout, getUsers, userUpdate, userDetail } from "@/services/requests/users";
+import { registerUser, login, 
+  getMe, logout, 
+  getUsers, userUpdate, 
+  userDetail, deleteUser 
+} from "@/services/requests/users";
+
 
 export function useRegisterMutation() {
   const queryClient = useQueryClient();
@@ -8,6 +13,7 @@ export function useRegisterMutation() {
     mutationFn: registerUser,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["departments"] });
     }
   });
 }
@@ -53,6 +59,19 @@ export function useUserUpdate() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: userUpdate,
-    onSuccess: () => queryClient.invalidateQueries({queryKey: ["users"]})
+    onSuccess: () => {
+      queryClient.invalidateQueries({queryKey: ["users"]});
+      queryClient.invalidateQueries({queryKey: ["departments"]});
+    }
+  })
+}
+
+export function useUserDelete() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteUser,
+    onSuccess: () => {
+      queryClient.invalidateQueries({queryKey: ["users"]});
+    }
   })
 }

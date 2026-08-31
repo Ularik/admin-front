@@ -1,4 +1,3 @@
-import { Query } from "@tanstack/react-query";
 import axiosApi from "../../lib/axiosApi";
 import type {
   UserType,
@@ -46,7 +45,11 @@ export async function userUpdate({ id, data }: { id: string, data: UserUpdateTyp
     return res.data;
 }
 
-export async function userDetail(id: string) {
+export async function userDetail(id: string): Promise<UserType> {
   const res = await axiosApi.get(`/users/${id}`);
   return res.data;
+}
+
+export async function deleteUser(id: string): Promise<void> {
+  await axiosApi.delete(`/admin/users/${id}`);
 }
