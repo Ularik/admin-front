@@ -14,11 +14,9 @@ export default function buildTaskFormData(
   if (data.description != null) {
     formData.append("description", data.description);
   }
-
   for (const dep_id of data.departments_ids) {
     formData.append("departments_ids", dep_id);
   }
-
   for (const executorId of data.executor_ids) {
     formData.append("executor_ids", executorId);
   }

@@ -1,12 +1,11 @@
 "use client";
 
-import { use, useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 
 import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { buttonVariants, Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -22,7 +21,6 @@ import {
 import {
   Calendar,
   Clock,
-  AlertTriangle,
   ArrowLeft,
   Lock,
   Trash2,
@@ -35,60 +33,44 @@ import {
 
 import { TaskMainInfo } from "@/components/tasks/taskUpdate/taskMainInfo";
 import { TaskExecutors } from "@/components/tasks/taskUpdate/taskExecutors";
-
-import { useTaskDetail } from "@/services/queries/tasks";
-import { useDepartments } from "@/services/queries/departments";
 import { useUsers } from "@/services/queries/users";
-
-import type { UserType, UserWithDepartment } from "@/types/user";
+import TaskReplies from "@/components/reply/Replies";
+import type { UserType } from "@/types/user";
 import type { DocumentLiteType } from "@/types/document";
-import { TaskUpdateType } from "@/types/tasks";
-
-interface TaskFormInputs {
-  title: string;
-  description: string;
-  departments_ids: string[];
-  executor_ids: string[];
-}
+import { TaskType, TaskUpdateType } from "@/types/tasks";
+import type { TaskFormInputs } from "@/types/tasks";
 
 interface TaskDetailPageProps {
-  params: Promise<{ id: string }>;
+  task: TaskType;
   user: UserType;
   updateTaskFunc: (data: TaskUpdateType) => void;
-  deleteTaskFunc: (id: string) => void;
+  deleteTaskFunc: () => void;
   isUpdating?: boolean;
   isDeleting?: boolean;
-  redirectAfterDeletePath?: string;
-  // Параметр для гибкого построения ссылки на страницу ответа (если нужно использовать разные префиксы роутов)
   replyBasePath?: string;
 }
 
 export default function TaskDetail({
-  params,
+  task,
   user,
   updateTaskFunc,
   deleteTaskFunc,
   isUpdating = false,
   isDeleting = false,
-  redirectAfterDeletePath = "/heads/tasks",
   replyBasePath = "/heads/tasks",
 }: TaskDetailPageProps) {
-  const { id } = use(params);
   const router = useRouter();
 
   const [isEditing, setIsEditing] = useState(false);
   const [existingFiles, setExistingFiles] = useState<DocumentLiteType[]>([]);
   const [newFiles, setNewFiles] = useState<File[]>([]);
 
-  const { data: task, isLoading, isError } = useTaskDetail(id);
-
   const userDeptId = user?.department_id ? String(user.department_id) : null;
-  const { data: departments = [] } = useDepartments();
   const { data: users = [] } = useUsers(user?.department_id ?? undefined);
 
   // Права на редактирование
   const canEdit = useMemo(() => {
-    if (!user || !task) return false;
+    if (!user) return false;
     if (user.status === "ADMIN") return true;
 
     const taskDepartments = task.departments || [];
@@ -136,48 +118,22 @@ export default function TaskDetail({
     setIsEditing(false);
   };
 
-  const toggleExecutor = (userId: string) => {
-    if (!isEditing || !canEdit) return;
-    const current = new Set(selectedExecutors);
-    current.has(userId) ? current.delete(userId) : current.add(userId);
-    form.setValue("executor_ids", Array.from(current));
-  };
 
   const onSubmit = async (data: TaskFormInputs) => {
     if (!canEdit) return;
+
+    const fullData: TaskUpdateType = {
+      ...data,
+      attachments: newFiles,
+      old_attachments_ids: existingFiles.map((f) => f.id),
+    }
     try {
-      updateTaskFunc({
-        id,
-        title: data.title.trim(),
-        description: data.description.trim() || null,
-        departments_ids: data.departments_ids,
-        executor_ids: data.executor_ids,
-        attachments: newFiles,
-        old_attachments_ids: existingFiles.map((f) => f.id),
-      });
+      updateTaskFunc(fullData);
       setIsEditing(false);
     } catch (error) {
       console.error("Ошибка обновления:", error);
     }
   };
-
-  const handleDelete = async () => {
-    if (!canEdit) return;
-    try {
-      deleteTaskFunc(id);
-      router.push(redirectAfterDeletePath);
-    } catch (error) {
-      console.error("Ошибка удаления:", error);
-    }
-  };
-
-  const getUserInitials = (u: Partial<UserWithDepartment>) =>
-    u.last_name && u.username
-      ? `${u.last_name[0]}${u.username[0]}`.toUpperCase()
-      : "??";
-
-  const getUserDisplayName = (u: Partial<UserWithDepartment>) =>
-    u.last_name ? `${u.last_name} ${u.username}` : u.username || "Пользователь";
 
   const formatDate = (date: Date | string) =>
     new Date(date).toLocaleString("ru-RU", {
@@ -187,38 +143,6 @@ export default function TaskDetail({
       hour: "2-digit",
       minute: "2-digit",
     });
-
-  if (user?.status !== "ADMIN" && user?.department_id === null) {
-    return (
-      <div className="p-6 max-w-4xl mx-auto space-y-6 text-center">
-        <Button variant="ghost" size="sm" onClick={() => router.back()}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Назад к списку
-        </Button>
-      </div>
-    );
-  }
-
-  if (isLoading) return <TaskDetailSkeleton />;
-
-  if (isError || !task) {
-    return (
-      <div className="p-6 max-w-4xl mx-auto space-y-6 text-center">
-        <Button variant="ghost" size="sm" onClick={() => router.back()}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Назад к списку
-        </Button>
-        <Card className="border-red-200 bg-red-50/50">
-          <CardContent className="p-8 space-y-3">
-            <AlertTriangle className="h-10 w-10 mx-auto text-red-500" />
-            <h2 className="text-lg font-semibold text-red-900">
-              Задача не найдена
-            </h2>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   const isMultiDepartmentTask = (task.departments?.length || 0) > 1;
 
@@ -252,7 +176,7 @@ export default function TaskDetail({
           {/* Кнопка создания ответа доступна всегда, когда форма не в режиме редактирования */}
           {!isEditing && (
             <Link
-              href={`${replyBasePath}/${id}/reply`}
+              href={`${replyBasePath}/${task.id}/reply/new`}
               className={buttonVariants({
                 variant: "default",
                 size: "sm",
@@ -303,7 +227,7 @@ export default function TaskDetail({
                       <AlertDialogFooter>
                         <AlertDialogCancel>Отмена</AlertDialogCancel>
                         <AlertDialogAction
-                          onClick={handleDelete}
+                          onClick={() => deleteTaskFunc()}
                           disabled={isDeleting}
                           className="bg-red-600 hover:bg-red-700 text-white"
                         >
@@ -351,11 +275,9 @@ export default function TaskDetail({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           <TaskMainInfo
-            taskId={task.id}
+            task={task}
             isEditing={isEditing && canEdit}
             form={form}
-            departments={departments}
-            currentDepartments={task.departments || []}
             existingFiles={existingFiles}
             newFiles={newFiles}
             onRemoveExistingFile={(fId) =>
@@ -369,17 +291,16 @@ export default function TaskDetail({
               setNewFiles((prev) => [...prev, ...Array.from(e.target.files!)])
             }
           />
+          <TaskReplies taskId={task.id}/>
         </div>
 
         <div className="space-y-6">
           <TaskExecutors
             isEditing={isEditing && canEdit}
             executors={task.executors || []}
+            form={form}
             allUsers={users}
             selectedExecutors={selectedExecutors}
-            onToggleExecutor={toggleExecutor}
-            getUserInitials={getUserInitials}
-            getUserDisplayName={getUserDisplayName}
           />
 
           <Card className="border-zinc-200 shadow-xs bg-zinc-50/50">
@@ -413,21 +334,5 @@ export default function TaskDetail({
         </div>
       </div>
     </form>
-  );
-}
-
-function TaskDetailSkeleton() {
-  return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6">
-      <Skeleton className="h-8 w-32 bg-zinc-200" />
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <Skeleton className="h-[400px] w-full bg-zinc-200 rounded-lg" />
-        </div>
-        <div>
-          <Skeleton className="h-[250px] w-full bg-zinc-200 rounded-lg" />
-        </div>
-      </div>
-    </div>
   );
 }

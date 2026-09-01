@@ -12,9 +12,8 @@ export async function postAdminTask(data: TaskCreateType) {
   return res.data;
 }
 
-export async function putAdminTask(data: TaskUpdateType) {
-  const { id, ...payload } = data;
-  const form = buildTaskFormData(payload);
+export async function putAdminTask({ id, data }: { id: string, data: TaskUpdateType }) {
+  const form = buildTaskFormData(data);
   const res = await axiosApi.put(`/admin/tasks/${id}`, form);
   return res.data;
 }

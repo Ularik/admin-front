@@ -21,27 +21,40 @@ import {
 import { Users, UserCheck, X, Check, ChevronsUpDown } from "lucide-react";
 
 import type { UserWithDepartment, UserType } from "@/types/user";
+import { UseFormReturn } from "react-hook-form";
+import { TaskFormInputs } from "@/types/tasks";
 
 interface TaskExecutorsProps {
   isEditing: boolean;
   executors: UserType[];
+  form: UseFormReturn<TaskFormInputs>;
   allUsers: UserWithDepartment[];
   selectedExecutors: string[];
-  onToggleExecutor: (userId: string) => void;
-  getUserInitials: (user: Partial<UserWithDepartment>) => string;
-  getUserDisplayName: (user: Partial<UserWithDepartment>) => string;
 }
 
 export function TaskExecutors({
   isEditing,
   executors,
+  form,
   allUsers,
   selectedExecutors,
-  onToggleExecutor,
-  getUserInitials,
-  getUserDisplayName,
 }: TaskExecutorsProps) {
   const [open, setOpen] = useState(false);
+
+  const toggleExecutor = (userId: string) => {
+    const current = new Set(selectedExecutors);
+    current.has(userId) ? current.delete(userId) : current.add(userId);
+    form.setValue("executor_ids", Array.from(current));
+  };
+
+  const getUserInitials = (u: Partial<UserWithDepartment>) =>
+  u.last_name && u.username
+    ? `${u.last_name[0]}${u.username[0]}`.toUpperCase()
+    : "??";
+
+  const getUserDisplayName = (u: Partial<UserWithDepartment>) =>
+  u.last_name ? `${u.last_name} ${u.username}` : u.username || "Пользователь";
+
   return (
     <Card className="border-zinc-200 shadow-xs">
       <CardHeader className="pb-3 border-b border-zinc-100 flex flex-row items-center justify-between space-y-0">
@@ -87,7 +100,7 @@ export function TaskExecutors({
                         <CommandItem
                           key={user.id}
                           value={getUserDisplayName(user)}
-                          onSelect={() => onToggleExecutor(String(user.id))}
+                          onSelect={() => toggleExecutor(String(user.id))}
                           className="text-xs flex items-center justify-between cursor-pointer"
                         >
                           <div className="flex items-center gap-2 truncate">
@@ -145,7 +158,7 @@ export function TaskExecutors({
                       type="button"
                       variant="ghost"
                       size="icon"
-                      onClick={() => onToggleExecutor(String(user.id))}
+                      onClick={() => toggleExecutor(String(user.id))}
                       className="h-6 w-6 text-zinc-400 hover:text-red-600"
                     >
                       <X className="h-3.5 w-3.5" />

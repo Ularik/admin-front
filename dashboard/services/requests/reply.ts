@@ -1,5 +1,5 @@
 import axiosApi from "@/lib/axiosApi";
-import { ReplyCreateType } from "@/types/replies";
+import { ReplyCreateType, ReplyType } from "@/types/replies";
 
 
 export async function createReply({task_id, data}: {task_id: string, data: ReplyCreateType}) {
@@ -12,3 +12,13 @@ export async function createReply({task_id, data}: {task_id: string, data: Reply
     const result = await axiosApi.post(`/tasks/${task_id}/tasks_reply`, formData);
     return result.data;
 };
+
+
+export async function getReplies(task_id: string): Promise<ReplyType[]> {
+    const result = await axiosApi.get(`/tasks/${task_id}/tasks_reply`);
+    return result.data;
+}
+
+export async function deleteReply(reply_id: string) {
+    await axiosApi.delete(`/tasks_reply/${reply_id}`);
+}

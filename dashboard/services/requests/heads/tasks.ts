@@ -8,9 +8,8 @@ export async function postHeadsTask(data: TaskCreateType) {
   return res.data;
 }
 
-export async function putHeadsTask(data: TaskUpdateType) {
-  const { id, ...payload } = data;
-  const form = buildTaskFormData(payload);
+export async function putHeadsTask({id, data}: { id: string; data: TaskUpdateType }) {
+  const form = buildTaskFormData(data);
   const res = await axiosApi.put(`/head/tasks/${id}`, form);
   return res.data;
 }

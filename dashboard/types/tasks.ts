@@ -11,13 +11,19 @@ export interface TaskCreateType {
 }
 
 export interface TaskUpdateType {
-  id: string;
   title: string;
   description?: string | null;
   departments_ids: string[];
   executor_ids: string[];
   attachments: File[];
   old_attachments_ids: string[];
+}
+
+export interface TaskFormInputs {
+  title: string;
+  description: string;
+  departments_ids: string[];
+  executor_ids: string[];
 }
 
 

@@ -26,13 +26,14 @@ import {
 import type { DocumentLiteType } from "@/types/document";
 import type { DepartmentLiteType, DepartmentType } from "@/types/departments";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { useMe } from "@/services/queries/users";
+import { useDepartments } from "@/services/queries/departments";
+import { TaskType } from "@/types/tasks";
 
 interface TaskMainInfoProps {
-  taskId: number | string;
+  task: TaskType;
   isEditing: boolean;
   form: UseFormReturn<any>;
-  departments: Array<DepartmentType>;
-  currentDepartments: DepartmentLiteType[];
   existingFiles: DocumentLiteType[];
   newFiles: File[];
   onRemoveExistingFile: (fileId: string) => void;
@@ -41,11 +42,9 @@ interface TaskMainInfoProps {
 }
 
 export function TaskMainInfo({
-  taskId,
+  task,
   isEditing,
   form,
-  departments,
-  currentDepartments,
   existingFiles,
   newFiles,
   onRemoveExistingFile,
@@ -58,6 +57,11 @@ export function TaskMainInfo({
     formState: { errors },
   } = form;
 
+  const { data: me } = useMe();
+
+  const isAdmin = me?.status === "ADMIN";
+  const { data: departments = [] } = useDepartments();
+  
   const [openDeptSelect, setOpenDeptSelect] = useState(false);
 
   return (
@@ -65,11 +69,11 @@ export function TaskMainInfo({
       <CardHeader className="space-y-3 border-b border-zinc-100 pb-5">
         <div className="flex items-center gap-2 flex-wrap">
           <Badge variant="outline" className="border-zinc-300 text-zinc-600">
-            ID: #{taskId}
+            ID: #{task.id}
           </Badge>
 
           {!isEditing ? (
-            currentDepartments.map((dep) => (
+            task.departments?.map((dep) => (
               <Badge
                 key={dep.id}
                 variant="secondary"
@@ -87,6 +91,8 @@ export function TaskMainInfo({
                 const selectedIds: string[] = field.value || [];
 
                 const toggleDept = (deptId: string) => {
+                  if (!isAdmin) return;
+                  
                   const current = new Set(selectedIds);
                   if (current.has(deptId)) {
                     current.delete(deptId);
@@ -97,27 +103,26 @@ export function TaskMainInfo({
                 };
 
                 return (
-                  <Popover
-                    open={openDeptSelect}
-                    onOpenChange={setOpenDeptSelect}
+                  <Popover 
+                    open={isAdmin ? openDeptSelect : false} 
+                    onOpenChange={isAdmin ? setOpenDeptSelect : undefined}
                   >
-                    <PopoverTrigger>
-                      <span
-                        role="button"
-                        tabIndex={0}
-                        className={buttonVariants({
-                          variant: "outline",
-                          size: "sm",
-                          className:
-                            "h-8 text-xs cursor-pointer inline-flex items-center justify-center",
-                        })}
-                      >
-                        {selectedIds.length === 0
-                          ? "Выберите отделы"
-                          : `Выбрано отделов: ${selectedIds.length}`}
-                        <ChevronsUpDown className="ml-1 h-3 w-3 opacity-50" />
-                      </span>
+                    <PopoverTrigger 
+                      disabled={!isAdmin}
+                      className={buttonVariants({
+                        variant: "outline",
+                        size: "sm",
+                        className: `h-8 text-xs inline-flex items-center justify-center ${
+                          !isAdmin ? "pointer-events-none opacity-50 cursor-not-allowed" : "cursor-pointer"
+                        }`,
+                      })}
+                    >
+                      {selectedIds.length === 0
+                        ? "Выберите отделы"
+                        : `Выбрано отделов: ${selectedIds.length}`}
+                      <ChevronsUpDown className="ml-1 h-3 w-3 opacity-50" />
                     </PopoverTrigger>
+
                     <PopoverContent className="w-[220px] p-0" align="start">
                       <Command>
                         <CommandInput
@@ -131,24 +136,21 @@ export function TaskMainInfo({
                           <CommandGroup>
                             {departments.map((dept) => {
                               const deptIdStr = String(dept.id);
-                              const isSelected =
-                                selectedIds.includes(deptIdStr);
+                              const isSelected = selectedIds.includes(deptIdStr);
 
                               return (
                                 <CommandItem
                                   key={dept.id}
                                   value={dept.title}
                                   onSelect={() => toggleDept(deptIdStr)}
-                                  className="text-xs flex items-center justify-between cursor-pointer"
+                                  className="text-xs flex items-center justify-between cursor-pointer select-none"
                                 >
-                                  <div className="flex items-center gap-2 truncate">
+                                  <div className="flex items-center gap-2 truncate pointer-events-none">
                                     <Building2 className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
-                                    <span className="truncate">
-                                      {dept.title}
-                                    </span>
+                                    <span className="truncate">{dept.title}</span>
                                   </div>
                                   <Check
-                                    className={`h-3.5 w-3.5 text-zinc-700 shrink-0 transition-opacity ${
+                                    className={`h-3.5 w-3.5 text-zinc-700 shrink-0 transition-opacity pointer-events-none ${
                                       isSelected ? "opacity-100" : "opacity-0"
                                     }`}
                                   />

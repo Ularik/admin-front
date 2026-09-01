@@ -1,13 +1,20 @@
 "use client";
 
-import ReplyForm from "@/components/reply/ReplyForm";
+import { useReplies } from "@/services/queries/reply";
+import { use } from "react";
 
-export default function CreateTaskReplyPage() {
+interface Props {
+  params: Promise<{ id: string }>;
+}
 
+export default function TaskRepliesPage({ params, }: Props) {
+  const { id } = use(params); 
+
+  const { data: replies, isLoading, error } = useReplies(id);
 
   return (
     <>
-      <ReplyForm />
+      
     </>
   );
 }
