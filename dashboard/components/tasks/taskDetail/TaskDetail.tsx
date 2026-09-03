@@ -291,7 +291,10 @@ export default function TaskDetail({
               setNewFiles((prev) => [...prev, ...Array.from(e.target.files!)])
             }
           />
+
+          {/* Ответы на задачу */}
           <TaskReplies taskId={task.id}/>
+          
         </div>
 
         <div className="space-y-6">

@@ -6,6 +6,12 @@ export interface ReplyCreateType {
     attachments: File[]
 }
 
+export interface ReplyUpdateType {
+    content: string;
+    attachments: File[];
+    old_attachments_ids: string[];
+}
+
 export interface ReplyType {
     id: string;
     author_id: string | null;
