@@ -80,6 +80,15 @@ export default function TaskDetail({
     return Boolean(userDeptId && taskDeptId === userDeptId);
   }, [user, task, userDeptId]);
 
+  const canReply = useMemo(() => {
+    const taskDepartments = task.departments || [];
+    const isExist = taskDepartments.find(dep => {
+      return String(dep.id) === userDeptId;
+    });
+    if (isExist) return true;
+  }, [task, userDeptId]);
+
+
   const form = useForm<TaskFormInputs>({
     defaultValues: {
       title: "",
@@ -174,7 +183,7 @@ export default function TaskDetail({
 
         <div className="flex items-center gap-2">
           {/* Кнопка создания ответа доступна всегда, когда форма не в режиме редактирования */}
-          {!isEditing && (
+          {!isEditing && canReply && (
             <Link
               href={`${replyBasePath}/${task.id}/reply/new`}
               className={buttonVariants({

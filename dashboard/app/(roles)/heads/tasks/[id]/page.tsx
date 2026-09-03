@@ -8,12 +8,11 @@ import {
 } from "lucide-react";
 import TaskDetail from "@/components/tasks/taskDetail/TaskDetail";
 import { useMe } from "@/services/queries/users";
-import { useReplies } from "@/services/queries/reply";
 import { useUpdateHeadsTask, useDeleteHeadsTask } from "@/services/queries/heads/tasks";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTaskDetail } from "@/services/queries/tasks";
 import { useRouter } from "next/navigation";
-import { use, useMemo } from "react";
+import { use } from "react";
 import { TaskUpdateType } from "@/types/tasks";
 
 

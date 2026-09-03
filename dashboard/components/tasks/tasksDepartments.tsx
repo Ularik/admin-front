@@ -10,9 +10,14 @@ import { Badge } from "@/components/ui/badge";
 interface Props {
   departments: DepartmentType[];
   tasks: TaskType[];
+  taskBasePath?: string;
 }
 
-export default function TasksDepartments({ departments, tasks }: Props) {
+export default function TasksDepartments({
+  departments,
+  tasks,
+  taskBasePath = "tasks",
+}: Props) {
   // Группируем задачи по массиву departments
   const tasksByDepartment = useMemo(() => {
     const map = new Map<string | null, TaskType[]>();
@@ -93,7 +98,11 @@ export default function TasksDepartments({ departments, tasks }: Props) {
               <div className="p-3 overflow-y-auto space-y-3 flex-1 scrollbar-thin">
                 {deptTasks.length > 0 ? (
                   deptTasks.map((task) => (
-                    <TaskKanbanCard key={`${dept.id}-${task.id}`} task={task} />
+                    <TaskKanbanCard
+                      key={`${dept.id}-${task.id}`}
+                      task={task}
+                      taskBasePath={taskBasePath}
+                    />
                   ))
                 ) : (
                   <div className="h-24 border-2 border-dashed border-zinc-200 rounded-lg flex items-center justify-center text-xs text-zinc-400">
@@ -127,7 +136,11 @@ export default function TasksDepartments({ departments, tasks }: Props) {
             {/* Список задач без отдела */}
             <div className="p-3 overflow-y-auto space-y-3 flex-1 scrollbar-thin">
               {unassignedTasks.map((task) => (
-                <TaskKanbanCard key={`unassigned-${task.id}`} task={task} />
+                <TaskKanbanCard
+                  key={`unassigned-${task.id}`}
+                  task={task}
+                  taskBasePath={taskBasePath}
+                />
               ))}
             </div>
           </div>

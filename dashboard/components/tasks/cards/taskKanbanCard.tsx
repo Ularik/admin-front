@@ -11,9 +11,10 @@ import { useMe } from "@/services/queries/users";
 
 interface Props {
   task: TaskType;
+  taskBasePath?: string;
 }
 
-export default function TaskKanbanCard({ task }: Props) {
+export default function TaskKanbanCard({ task, taskBasePath = "tasks" }: Props) {
   const router = useRouter();
   const { data: me } = useMe();
 
@@ -36,11 +37,11 @@ export default function TaskKanbanCard({ task }: Props) {
   const handleEditClick = (e: React.MouseEvent) => {
     e.preventDefault(); // Предотвращаем переход по родительскому Link
     e.stopPropagation();
-    router.push(`tasks/${task.id}/`);
+    router.push(`${taskBasePath}/${task.id}/`);
   };
 
   return (
-    <Link href={`tasks/${task.id}`} className="block group">
+    <Link href={`${taskBasePath}/${task.id}`} className="block group">
       <Card className="border-zinc-200 py-1 group-hover:border-zinc-400 group-hover:shadow-sm transition-all bg-white cursor-pointer relative">
         <CardContent className="p-3 space-y-2.5">
           {/* 1. Сверху: Отделы и Исполнители */}

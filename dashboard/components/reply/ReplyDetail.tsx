@@ -49,9 +49,16 @@ import { ApiErrorResponse } from "@/types/main";
 interface Props {
   reply_id: string;
   taskTitle?: string;
+  canEdit?: boolean;
+  canDelete?: boolean;
 }
 
-export default function ReplyDetail({ reply_id, taskTitle }: Props) {
+export default function ReplyDetail({
+  reply_id,
+  taskTitle,
+  canEdit = true,
+  canDelete = true,
+}: Props) {
   const { data: reply, isPending, error } = useDetailReply(reply_id);
   const { mutate: deleteReply, isPending: isDeleting } = useReplyDelete();
   const { mutate: updateReply, isPending: isUpdating } = useReplyUpdate();
@@ -210,7 +217,7 @@ const handleDelete = () => {
           </Badge>
 
           {/* Кнопка режима редактирования */}
-          {!isEditing && (
+          {canEdit && !isEditing && (
             <Button
               variant="outline"
               size="sm"
@@ -223,7 +230,7 @@ const handleDelete = () => {
           )}
 
           {/* Диалог подтверждения удаления */}
-          <AlertDialog
+          {canDelete && <AlertDialog
             open={isDeleteDialogOpen}
             onOpenChange={setIsDeleteDialogOpen}
           >
@@ -262,7 +269,7 @@ const handleDelete = () => {
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
-          </AlertDialog>
+          </AlertDialog>}
         </div>
       </div>
 

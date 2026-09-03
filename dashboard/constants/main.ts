@@ -9,6 +9,7 @@ import {
   Star,
   Tags,
   Users,
+  UserRound,
 } from "lucide-react";
 
 import type { UserRole } from "@/types/user";
@@ -17,7 +18,7 @@ export const roleDashboardPaths: Record<UserRole, string> = {
   ADMIN: "/admin",
   HEAD: "/heads",
   DEPUTY: "/heads",
-  USER: "/employers",
+  USER: "/users",
 };
 
 export type DashboardMenuItem = {
@@ -69,5 +70,23 @@ export const dashboardMenuItems: DashboardMenuItem[] = [
     href: "/heads/myexecutors",
     roles: ["HEAD"],
     icon: Plane,
+  },
+  {
+    label: "Панель",
+    href: "/users",
+    roles: ["USER"],
+    icon: LayoutDashboard,
+  },
+  {
+    label: "Задачи",
+    href: "/users/tasks",
+    roles: ["USER"],
+    icon: Newspaper,
+  },
+  {
+    label: "Сотрудники",
+    href: "/users/executors",
+    roles: ["USER"],
+    icon: UserRound,
   },
 ];

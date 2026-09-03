@@ -21,9 +21,15 @@ import { usePathname } from "next/navigation";
 
 interface ReplyItemProps {
   reply: ReplyType;
+  showOpen?: boolean;
+  replyBasePath?: string;
 }
 
-export function ReplyItem({ reply }: ReplyItemProps) {
+export function ReplyItem({
+  reply,
+  showOpen = true,
+  replyBasePath,
+}: ReplyItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const pathName = usePathname();
   const mockAuthorName = "Неизвестный сотрудник";
@@ -74,16 +80,18 @@ export function ReplyItem({ reply }: ReplyItemProps) {
           </div>
 
           {/* Кнопка "Открыть" для детального просмотра */}
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-7 px-2.5 text-[11px] font-medium gap-1 text-zinc-700 border-zinc-200 hover:bg-white hover:text-zinc-900"
-          >
-            <Link href={`${pathName}/reply/${reply.id}`}>
-              <span>Открыть</span>
-              <ExternalLink className="h-3 w-3 text-zinc-400" />
-            </Link>
-          </Button>
+          {showOpen && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 px-2.5 text-[11px] font-medium gap-1 text-zinc-700 border-zinc-200 hover:bg-white hover:text-zinc-900"
+            >
+              <Link href={`${replyBasePath || pathName}/reply/${reply.id}`}>
+                <span>Открыть</span>
+                <ExternalLink className="h-3 w-3 text-zinc-400" />
+              </Link>
+            </Button>
+          )}
         </div>
       </div>
 

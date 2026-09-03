@@ -4,14 +4,44 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MessageSquare } from "lucide-react";
 import { useReplies } from "@/services/queries/reply";
+import { useMe } from "@/services/queries/users";
 import { ReplyItem } from "./ReplyItem";
 
 interface Props {
   taskId: string;
+  showReplyLinks?: boolean;
+  replyBasePath?: string;
+  onlyOwnReplyLinks?: boolean;
 }
 
-export default function Replies({ taskId }: Props) {
+export default function Replies({
+  taskId,
+  showReplyLinks = true,
+  replyBasePath,
+  onlyOwnReplyLinks = false,
+}: Props) {
   const { data: replies, isLoading, isError } = useReplies(taskId);
+  const { data: currentUser } = useMe();
+
+  if (isLoading) {
+    return (
+      <Card className="border-zinc-200 shadow-xs bg-white">
+        <CardContent className="p-8 text-center text-xs text-zinc-500">
+          Загрузка ответов...
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Card className="border-red-200 bg-red-50/50 shadow-xs">
+        <CardContent className="p-8 text-center text-xs text-red-600">
+          Не удалось загрузить ответы на задачу.
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="border-zinc-200 shadow-xs bg-white">
@@ -32,7 +62,15 @@ export default function Replies({ taskId }: Props) {
           </div>
         ) : (
           replies?.map((reply) => (
-            <ReplyItem key={reply.id} reply={reply} />
+            <ReplyItem
+              key={reply.id}
+              reply={reply}
+              showOpen={
+                showReplyLinks &&
+                (!onlyOwnReplyLinks || reply.author_id === currentUser?.id)
+              }
+              replyBasePath={replyBasePath}
+            />
           ))
         )}
       </CardContent>

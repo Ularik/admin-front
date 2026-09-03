@@ -72,6 +72,7 @@ export function useUserDelete() {
     mutationFn: deleteUser,
     onSuccess: () => {
       queryClient.invalidateQueries({queryKey: ["users"]});
+      queryClient.invalidateQueries({queryKey: ["tasks"]});
     }
   })
 }

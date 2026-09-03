@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { Plus, FileText } from "lucide-react";
 
@@ -12,19 +12,34 @@ import type { TaskType } from "@/types/tasks";
 import { useTasks } from "@/services/queries/tasks";
 import { PaginationControl } from "@/components/pagination/pagination";
 import TasksDepartments from "@/components/tasks/tasksDepartments";
+import TaskScopeToggle from "@/components/tasks/taskScopeToggle/TaskScopeToggle";
 import { UserType } from "@/types/user";
 
 interface Props {
-    user: UserType
+    user: UserType;
+    departmentId?: string;
+    canCreate?: boolean;
+    taskBasePath?: string;
+    taskScope?: "all" | "department";
 }
 
-export default function AllTasksList({ user }: Props) {
+export default function AllTasksList({
+  user,
+  departmentId,
+  canCreate = user.status === "ADMIN" || Boolean(user.department_id),
+  taskBasePath = "tasks",
+  taskScope,
+}: Props) {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
 
   const offset = (page - 1) * limit;
 
-  const { data, isLoading, isError } = useTasks({ limit, offset });
+  const { data, isLoading, isError } = useTasks({
+    limit,
+    offset,
+    department_id: departmentId,
+  });
 
   const { data: departments = [] } = useDepartments();
 
@@ -40,26 +55,30 @@ export default function AllTasksList({ user }: Props) {
   return (
     <div className="p-6 space-y-6">
       {/* Шапка страницы */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-200 pb-5">
+      <div className="flex flex-col gap-4 border-b border-zinc-200 pb-5">
+        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <h1 className="text-2xl font-bold text-zinc-900 flex items-center gap-2">
             <FileText className="h-6 w-6 text-zinc-700" />
-            Список задач
+            {taskScope === "department" ? "Задачи отдела" : "Все задачи"}
           </h1>
           <p className="text-sm text-zinc-500 mt-1">
-            Всего задач в системе: {total}
+            {taskScope === "department"
+              ? `Задач отдела: ${total}`
+              : `Всего задач в системе: ${total}`}
           </p>
         </div>
 
-        {(user.status === "ADMIN" ||
-          user.department_id) ? (
-            <Link href="tasks/new">
+        {canCreate ? (
+            <Link href={`${taskBasePath}/new`}>
               <Button className="bg-zinc-900 hover:bg-zinc-800 text-white shrink-0">
                 <Plus className="h-4 w-4 mr-2" />
                 Создать задачу
               </Button>
             </Link>
           ): (null)}
+        </div>
+        {taskScope && <TaskScopeToggle active={taskScope} />}
       </div>
 
       {/* Ошибка загрузки */}
@@ -83,7 +102,11 @@ export default function AllTasksList({ user }: Props) {
           </CardContent>
         </Card>
       ) : (
-        <TasksDepartments tasks={tasks} departments={departments} />
+        <TasksDepartments
+          tasks={tasks}
+          departments={departments}
+          taskBasePath={taskBasePath}
+        />
       )}
 
       {/* Пагинация */}

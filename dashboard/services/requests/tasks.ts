@@ -13,6 +13,7 @@ export async function getTasks(
     params: {
       limit: params.limit,
       offset: params.offset,
+      department: params.department_id,
     },
   });
   return res.data;

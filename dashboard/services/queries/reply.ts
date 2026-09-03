@@ -10,7 +10,8 @@ export const useReplyCreate = () => {
     return useMutation<unknown, AxiosError<ApiErrorResponse>, { task_id: string; data: ReplyCreateType }>({
         mutationFn: createReply,
         onSuccess: () => {
-            queryClient.invalidateQueries({queryKey: ["replies"]})
+            queryClient.invalidateQueries({queryKey: ["replies"]});
+            queryClient.invalidateQueries({queryKey: ["tasks"]})
         }
     });
 };

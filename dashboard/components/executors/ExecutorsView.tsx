@@ -36,10 +36,14 @@ const STATUS_PRIORITY: Record<string, number> = {
 interface ExecutorsViewProps {
   /** Разрешить ли отображение кнопки "Добавить" */
   canAdd?: boolean;
+  readOnly?: boolean;
+  editBasePath?: string;
 }
 
 export default function ExecutorsView({
   canAdd = true,
+  readOnly = false,
+  editBasePath,
 }: ExecutorsViewProps) {
   const { data: users = [], isLoading, isError } = useUsers();
   const [search, setSearch] = useState("");
@@ -163,6 +167,10 @@ export default function ExecutorsView({
                   key={leader.id}
                   user={leader}
                   variant="featured"
+                  readOnly={readOnly}
+                  editHref={
+                    editBasePath ? `${editBasePath}/${leader.id}` : undefined
+                  }
                 />
               ))
             )}
@@ -214,6 +222,12 @@ export default function ExecutorsView({
                           key={employee.id}
                           user={employee}
                           variant="compact"
+                          readOnly={readOnly}
+                          editHref={
+                            editBasePath
+                              ? `${editBasePath}/${employee.id}`
+                              : undefined
+                          }
                         />
                       ))}
                     </div>

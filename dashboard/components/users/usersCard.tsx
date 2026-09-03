@@ -11,7 +11,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import type { UserWithDepartment } from "@/types/user";
 import { useMe } from "@/services/queries/users";
 import Link from "next/link";
@@ -67,18 +66,23 @@ export const STATUS_CONFIG: Record<
 interface EmployeeCardProps {
   user: UserWithDepartment;
   variant?: "featured" | "compact";
+  readOnly?: boolean;
+  editHref?: string;
 }
 
 export function EmployeeCard({
   user,
   variant = "compact",
+  readOnly = false,
+  editHref,
 }: EmployeeCardProps) {
   const config = STATUS_CONFIG[user.status] || STATUS_CONFIG.USER;
   const StatusIcon = config.icon;
   const { data: me } = useMe();
 
-  const canEdit = me?.status === "ADMIN" || 
-  (me?.status === "HEAD" && me?.department_id == user.department_id);
+  const canEdit = !readOnly &&
+    (me?.status === "ADMIN" ||
+      (me?.status === "HEAD" && me?.department_id == user.department_id));
 
   const initials =
     ((user.username?.[0] || "") + (user.last_name?.[0] || "")).toUpperCase() ||
@@ -110,9 +114,7 @@ export function EmployeeCard({
               <div className="flex items-center gap-1.5 shrink-0">
                 <StatusIcon className={`h-4 w-4 ${config.iconClass}`} />
                 {canEdit && (
-                  <Link
-                    href={`${user.id}`}
-                  >
+                  <Link href={editHref || `${user.id}`}>
                     <Pencil className="h-3.5 w-3.5" />
                   </Link>
                 )}
@@ -150,7 +152,7 @@ export function EmployeeCard({
               {fullName}
             </h4>
             {canEdit && (
-              <Link href={`executors/${user.id}`}>
+              <Link href={editHref || `executors/${user.id}`}>
                 <Pencil className="h-3.5 w-3.5" />
               </Link>
             )}
