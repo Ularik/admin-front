@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Plus, FileText } from "lucide-react";
+import { Plus, FileText, RotateCcw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -32,6 +32,8 @@ export default function AllTasksList({
 }: Props) {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
 
   const offset = (page - 1) * limit;
 
@@ -39,6 +41,8 @@ export default function AllTasksList({
     limit,
     offset,
     department_id: departmentId,
+    from_date: fromDate || undefined,
+    to_date: toDate || undefined,
   });
 
   const { data: departments = [] } = useDepartments();
@@ -49,6 +53,20 @@ export default function AllTasksList({
   // Обработчик смены размера страницы (сбрасываем на 1-ю страницу)
   const handleLimitChange = (newLimit: number) => {
     setLimit(newLimit);
+    setPage(1);
+  };
+
+  const handleDateChange = (
+    setter: (value: string) => void,
+    value: string,
+  ) => {
+    setter(value);
+    setPage(1);
+  };
+
+  const resetDates = () => {
+    setFromDate("");
+    setToDate("");
     setPage(1);
   };
 
@@ -79,6 +97,47 @@ export default function AllTasksList({
           ): (null)}
         </div>
         {taskScope && <TaskScopeToggle active={taskScope} />}
+      </div>
+
+      <div className="flex flex-col gap-3 rounded-lg border border-zinc-200 bg-zinc-50/60 p-4 sm:flex-row sm:flex-wrap sm:items-end">
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="tasks-from-date" className="text-xs font-medium text-zinc-600">
+            С даты
+          </label>
+          <input
+            id="tasks-from-date"
+            type="date"
+            value={fromDate}
+            max={toDate || undefined}
+            onChange={(event) => handleDateChange(setFromDate, event.target.value)}
+            className="h-9 rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-700 outline-none focus:border-zinc-400 focus:ring-2 focus:ring-zinc-200"
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="tasks-to-date" className="text-xs font-medium text-zinc-600">
+            По дату
+          </label>
+          <input
+            id="tasks-to-date"
+            type="date"
+            value={toDate}
+            min={fromDate || undefined}
+            onChange={(event) => handleDateChange(setToDate, event.target.value)}
+            className="h-9 rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-700 outline-none focus:border-zinc-400 focus:ring-2 focus:ring-zinc-200"
+          />
+        </div>
+        {(fromDate || toDate) && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={resetDates}
+            className="h-9 gap-2 border-zinc-200 bg-white text-zinc-600"
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+            Сбросить период
+          </Button>
+        )}
       </div>
 
       {/* Ошибка загрузки */}

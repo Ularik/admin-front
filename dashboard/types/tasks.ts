@@ -1,6 +1,13 @@
-import { DepartmentLiteType, DepartmentType } from "./departments";
+import { DepartmentLiteType } from "./departments";
 import { DocumentLiteType } from "./document";
 import { UserType } from "./user";
+
+export type TasksStatus = "NEW" | "PROGRESS" | "DONE";
+
+export interface TaskStatusUpdateType {
+  status: TasksStatus;
+}
+
 
 export interface TaskCreateType {
   title: string;
@@ -29,6 +36,7 @@ export interface TaskFormInputs {
 
 export interface TaskType {
   id: string;
+  status: TasksStatus;
   author_id: string;
   author: UserType;
   title: string;

@@ -1,6 +1,7 @@
 import type {
   TaskCreateType,
   TaskUpdateType,
+  TaskStatusUpdateType,
 } from "@/types/tasks";
 import axiosApi from "@/lib/axiosApi";
 import buildTaskFormData from "@/services/utils";
@@ -20,4 +21,15 @@ export async function putAdminTask({ id, data }: { id: string, data: TaskUpdateT
 
 export async function deleteAdminTask(id: string) {
   await axiosApi.delete(`/admin/tasks/${id}`);
+}
+
+export async function patchAdminTaskStatus({
+  id,
+  data,
+}: {
+  id: string;
+  data: TaskStatusUpdateType;
+}) {
+  const res = await axiosApi.patch(`/admin/tasks/${id}`, data);
+  return res.data;
 }

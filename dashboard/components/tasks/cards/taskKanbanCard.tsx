@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { TaskType } from "@/types/tasks";
 import { useMe } from "@/services/queries/users";
+import TaskStatusSelect from "@/components/tasks/taskStatusSelect/TaskStatusSelect";
 
 interface Props {
   task: TaskType;
@@ -28,7 +29,8 @@ export default function TaskKanbanCard({ task, taskBasePath = "tasks" }: Props) 
   // Проверяем, входит ли отдел текущего пользователя в список отделов задачи
   const canEdit =
     me?.status === "ADMIN" ||
-    (Boolean(me?.department_id) &&
+    (me?.status === "HEAD" &&
+      Boolean(me?.department_id) &&
       task.departments?.some(
         (dept) => String(dept.id) === String(me?.department_id),
       ) &&
@@ -111,9 +113,18 @@ export default function TaskKanbanCard({ task, taskBasePath = "tasks" }: Props) 
           </h4>
 
           {/* 3. Снизу: Дата */}
-          <div className="flex items-center gap-1 text-[11px] text-zinc-400 pt-0.5 border-t border-zinc-100">
-            <Calendar className="h-3 w-3" />
-            <span>{formatDate(task.created_at)}</span>
+          <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-zinc-100">
+            <div className="flex items-center gap-1 text-[11px] text-zinc-400">
+              <Calendar className="h-3 w-3" />
+              <span>{formatDate(task.created_at)}</span>
+            </div>
+            <div onClick={(event) => event.stopPropagation()} onPointerDown={(event) => event.stopPropagation()}>
+              <TaskStatusSelect
+                taskId={task.id}
+                status={task.status}
+                canChange={canEdit}
+              />
+            </div>
           </div>
         </CardContent>
       </Card>

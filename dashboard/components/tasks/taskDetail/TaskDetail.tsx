@@ -72,6 +72,7 @@ export default function TaskDetail({
   const canEdit = useMemo(() => {
     if (!user) return false;
     if (user.status === "ADMIN") return true;
+    if (user.status !== "HEAD") return false;
 
     const taskDepartments = task.departments || [];
     if (taskDepartments.length !== 1) return false;

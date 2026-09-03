@@ -14,6 +14,8 @@ export async function getTasks(
       limit: params.limit,
       offset: params.offset,
       department: params.department_id,
+      from_date: params.from_date,
+      to_date: params.to_date,
     },
   });
   return res.data;
