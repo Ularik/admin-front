@@ -12,6 +12,7 @@ export interface TaskStatusUpdateType {
 export interface TaskCreateType {
   title: string;
   description?: string | null;
+  deadlines: Date | null;
   departments_ids: string[];
   executor_ids: string[];
   attachments: File[];
@@ -20,6 +21,7 @@ export interface TaskCreateType {
 export interface TaskUpdateType {
   title: string;
   description?: string | null;
+  deadlines: Date | null;
   departments_ids: string[];
   executor_ids: string[];
   attachments: File[];
@@ -29,6 +31,7 @@ export interface TaskUpdateType {
 export interface TaskFormInputs {
   title: string;
   description: string;
+  deadlines: Date | null;
   departments_ids: string[];
   executor_ids: string[];
 }
@@ -41,6 +44,7 @@ export interface TaskType {
   author: UserType;
   title: string;
   description: string | null;
+  deadlines: Date | null;
   departments: DepartmentLiteType[];
   executors: UserType[];
   attachments: DocumentLiteType[];

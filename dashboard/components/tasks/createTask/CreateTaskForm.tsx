@@ -80,6 +80,7 @@ export default function CreateTaskForm({
     defaultValues: {
       title: "",
       description: "",
+      deadlines: null,
       departments_ids: isHead && userDeptId ? [userDeptId] : [],
       executor_ids: [],
       attachments: [],
@@ -208,6 +209,15 @@ export default function CreateTaskForm({
                 placeholder="Подробное описание задачи..."
                 className="resize-y"
                 {...register("description")}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="deadlines">Срок выполнения</Label>
+              <Input
+                id="deadlines"
+                type="date"
+                {...register("deadlines", { valueAsDate: true })}
               />
             </div>
 

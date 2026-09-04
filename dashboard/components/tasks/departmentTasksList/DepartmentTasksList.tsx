@@ -8,9 +8,13 @@ import { UserType } from "@/types/user";
 
 interface Props {
   user: UserType;
+  scopeBasePath?: string;
 }
 
-export default function DepartmentTasksList({ user }: Props) {
+export default function DepartmentTasksList({
+  user,
+  scopeBasePath = "/users/tasks",
+}: Props) {
   if (!user.department_id) {
     return (
       <div className="mx-auto max-w-5xl p-6">
@@ -31,9 +35,10 @@ export default function DepartmentTasksList({ user }: Props) {
     <AllTasksList
       user={user}
       departmentId={user.department_id}
-      canCreate={false}
-      taskBasePath="/users/tasks"
+      canCreate={true}
+      taskBasePath={scopeBasePath}
       taskScope="department"
+      scopeBasePath={scopeBasePath}
     />
   );
 }

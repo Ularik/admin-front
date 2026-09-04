@@ -114,7 +114,7 @@ export function EmployeeCard({
               <div className="flex items-center gap-1.5 shrink-0">
                 <StatusIcon className={`h-4 w-4 ${config.iconClass}`} />
                 {canEdit && (
-                  <Link href={editHref || `${user.id}`}>
+                  <Link href={editHref || `executors/${user.id}`}>
                     <Pencil className="h-3.5 w-3.5" />
                   </Link>
                 )}

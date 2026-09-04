@@ -1,7 +1,7 @@
 "use client";
 
 import { use } from "react";
-import { ArrowLeft, Calendar, FileText, MessageSquarePlus, Users } from "lucide-react";
+import { ArrowLeft, Calendar, CalendarClock, FileText, MessageSquarePlus, Users } from "lucide-react";
 import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
@@ -63,6 +63,7 @@ export default function UserTaskDetailPage({
           <div className="grid gap-4 border-t border-zinc-200 pt-5 text-sm text-zinc-500 sm:grid-cols-2">
             <div className="flex items-start gap-2"><Users className="mt-0.5 h-4 w-4" /><span>Исполнители: {task.executors?.map((executor) => `${executor.last_name} ${executor.username}`).join(", ") || "Не назначены"}</span></div>
             <div className="flex items-start gap-2"><Calendar className="mt-0.5 h-4 w-4" /><span>Создана: {new Date(task.created_at).toLocaleDateString("ru-RU")}</span></div>
+            <div className="flex items-start gap-2"><CalendarClock className="mt-0.5 h-4 w-4" /><span>Срок: {task.deadlines ? new Date(task.deadlines).toLocaleDateString("ru-RU") : "Не указан"}</span></div>
           </div>
         </CardContent>
       </Card>

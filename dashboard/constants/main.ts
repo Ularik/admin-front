@@ -54,6 +54,12 @@ export const dashboardMenuItems: DashboardMenuItem[] = [
     icon: Plane,
   },
   {
+    label: "Панель",
+    href: "/heads",
+    roles: ["HEAD"],
+    icon: LayoutDashboard,
+  },
+  {
     label: "Задачи",
     href: "/heads/tasks",
     roles: ["HEAD"],

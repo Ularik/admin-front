@@ -78,6 +78,7 @@ export default function TaskDetail({
     if (taskDepartments.length !== 1) return false;
 
     const taskDeptId = String(taskDepartments[0].id);
+    console.log(Boolean(userDeptId && taskDeptId === userDeptId))
     return Boolean(userDeptId && taskDeptId === userDeptId);
   }, [user, task, userDeptId]);
 
@@ -94,6 +95,7 @@ export default function TaskDetail({
     defaultValues: {
       title: "",
       description: "",
+        deadlines: null,
       departments_ids: [],
       executor_ids: [],
     },
@@ -106,6 +108,7 @@ export default function TaskDetail({
       form.reset({
         title: task.title || "",
         description: task.description || "",
+        deadlines: task.deadlines ? new Date(task.deadlines) : null,
         departments_ids: task.departments?.map((d) => String(d.id)) || [],
         executor_ids: task.executors?.map((e) => String(e.id)) || [],
       });
@@ -119,6 +122,7 @@ export default function TaskDetail({
       form.reset({
         title: task.title || "",
         description: task.description || "",
+        deadlines: task.deadlines ? new Date(task.deadlines) : null,
         departments_ids: task.departments?.map((d) => String(d.id)) || [],
         executor_ids: task.executors?.map((e) => String(e.id)) || [],
       });
@@ -339,6 +343,16 @@ export default function TaskDetail({
                   <span>Обновлена:</span>
                   <span className="font-medium text-zinc-800 ml-auto">
                     {formatDate(task.updated_at)}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-3.5 w-3.5 text-zinc-400" />
+                  <span>Срок:</span>
+                  <span className="font-medium text-zinc-800 ml-auto">
+                    {task.deadlines
+                      ? new Date(task.deadlines).toLocaleDateString("ru-RU")
+                      : "Не указан"}
                   </span>
                 </div>
               </div>

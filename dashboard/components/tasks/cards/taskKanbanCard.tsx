@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Building2, Users, Calendar, Pencil } from "lucide-react";
+import { Building2, Users, Calendar, CalendarClock, Pencil } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -111,6 +111,13 @@ export default function TaskKanbanCard({ task, taskBasePath = "tasks" }: Props) 
           <h4 className="font-medium text-zinc-900 text-sm line-clamp-2 group-hover:text-zinc-700 leading-snug">
             {task.title}
           </h4>
+
+          <div className="flex items-center gap-1 text-[11px] text-zinc-500">
+            <CalendarClock className="h-3 w-3" />
+            <span>
+              Срок: {task.deadlines ? formatDate(task.deadlines) : "не указан"}
+            </span>
+          </div>
 
           {/* 3. Снизу: Дата */}
           <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-zinc-100">

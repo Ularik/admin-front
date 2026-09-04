@@ -11,7 +11,7 @@ export const useReplyCreate = () => {
         mutationFn: createReply,
         onSuccess: () => {
             queryClient.invalidateQueries({queryKey: ["replies"]});
-            queryClient.invalidateQueries({queryKey: ["tasks"]})
+            queryClient.invalidateQueries({queryKey: ["tasks"]});
         }
     });
 };

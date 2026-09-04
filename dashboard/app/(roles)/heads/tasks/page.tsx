@@ -1,31 +1,20 @@
 "use client";
 
-import AllTasksList from "@/components/tasks/allTasksList/AllTasksList";
+import DepartmentTasksList, {
+  DepartmentTasksLoading,
+} from "@/components/tasks/departmentTasksList/DepartmentTasksList";
 import { useMe } from "@/services/queries/users";
 
 export default function HeadsTasksPage() {
-  const { data: me, isPending } = useMe();
+  const { data: user, isPending } = useMe();
 
   if (isPending) {
-    return <TasksSkeleton />;
+    return <DepartmentTasksLoading />;
   }
 
-  if (!me) {
-    return null;
-  }
+  if (!user) return null;
 
-  return <AllTasksList user={me} />;
+  return <DepartmentTasksList user={user} scopeBasePath="/heads/tasks" />;
 }
 
-function TasksSkeleton() {
-  return (
-    <div className="p-6 max-w-7xl mx-auto space-y-4 animate-pulse">
-      <div className="h-8 bg-zinc-200 rounded w-1/4 mb-6" />
-      <div className="space-y-3">
-        <div className="h-16 bg-zinc-200 rounded-lg" />
-        <div className="h-16 bg-zinc-200 rounded-lg" />
-        <div className="h-16 bg-zinc-200 rounded-lg" />
-      </div>
-    </div>
-  );
-}
+

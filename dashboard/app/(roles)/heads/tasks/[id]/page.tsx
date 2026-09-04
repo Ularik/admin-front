@@ -27,6 +27,7 @@ export default function TaskAdminDetailPage({
 
   const { data: me, isLoading: isMeLoading } = useMe();
 
+  console.log("me", me);
   const updateTask = useUpdateHeadsTask();
 
   const handleUpdate = (data: TaskUpdateType) => {

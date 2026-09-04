@@ -21,6 +21,7 @@ interface Props {
     canCreate?: boolean;
     taskBasePath?: string;
     taskScope?: "all" | "department";
+    scopeBasePath?: string;
 }
 
 export default function AllTasksList({
@@ -29,11 +30,13 @@ export default function AllTasksList({
   canCreate = user.status === "ADMIN" || Boolean(user.department_id),
   taskBasePath = "tasks",
   taskScope,
+  scopeBasePath,
 }: Props) {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  const [rushOnly, setRushOnly] = useState(false);
 
   const offset = (page - 1) * limit;
 
@@ -43,6 +46,7 @@ export default function AllTasksList({
     department_id: departmentId,
     from_date: fromDate || undefined,
     to_date: toDate || undefined,
+    rush: rushOnly || undefined,
   });
 
   const { data: departments = [] } = useDepartments();
@@ -96,7 +100,9 @@ export default function AllTasksList({
             </Link>
           ): (null)}
         </div>
-        {taskScope && <TaskScopeToggle active={taskScope} />}
+        {taskScope && (
+          <TaskScopeToggle active={taskScope} basePath={scopeBasePath} />
+        )}
       </div>
 
       <div className="flex flex-col gap-3 rounded-lg border border-zinc-200 bg-zinc-50/60 p-4 sm:flex-row sm:flex-wrap sm:items-end">
@@ -126,6 +132,18 @@ export default function AllTasksList({
             className="h-9 rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-700 outline-none focus:border-zinc-400 focus:ring-2 focus:ring-zinc-200"
           />
         </div>
+        <label className="flex h-9 items-center gap-2 text-sm text-zinc-700">
+          <input
+            type="checkbox"
+            checked={rushOnly}
+            onChange={(event) => {
+              setRushOnly(event.target.checked);
+              setPage(1);
+            }}
+            className="h-4 w-4 rounded border-zinc-300 accent-zinc-900"
+          />
+          Только срочные
+        </label>
         {(fromDate || toDate) && (
           <Button
             type="button"

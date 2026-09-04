@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/popover";
 import {
   Building2,
+  CalendarClock,
   Paperclip,
   Download,
   FileText,
@@ -24,16 +25,15 @@ import {
 } from "lucide-react";
 
 import type { DocumentLiteType } from "@/types/document";
-import type { DepartmentLiteType, DepartmentType } from "@/types/departments";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { useMe } from "@/services/queries/users";
 import { useDepartments } from "@/services/queries/departments";
-import { TaskType } from "@/types/tasks";
+import { TaskFormInputs, TaskType } from "@/types/tasks";
 
 interface TaskMainInfoProps {
   task: TaskType;
   isEditing: boolean;
-  form: UseFormReturn<any>;
+  form: UseFormReturn<TaskFormInputs>;
   existingFiles: DocumentLiteType[];
   newFiles: File[];
   onRemoveExistingFile: (fileId: string) => void;
@@ -189,6 +189,26 @@ export function TaskMainInfo({
             )}
           </div>
         )}
+
+        <div className="flex flex-wrap items-center gap-2 text-sm text-zinc-600">
+          <CalendarClock className="h-4 w-4 text-zinc-400" />
+          <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+            Срок выполнения:
+          </span>
+          {!isEditing ? (
+            <span className="font-medium text-zinc-800">
+              {task.deadlines
+                ? new Date(task.deadlines).toLocaleDateString("ru-RU")
+                : "Не указан"}
+            </span>
+          ) : (
+            <Input
+              type="date"
+              {...register("deadlines", { valueAsDate: true })}
+              className="h-8 w-auto text-sm"
+            />
+          )}
+        </div>
       </CardHeader>
 
       <CardContent className="pt-6 space-y-6">
