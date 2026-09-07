@@ -1,13 +1,8 @@
 import {
-  FileUser,
-  CircleUser,
-  FolderOpen,
   LayoutDashboard,
   type LucideIcon,
   Newspaper,
   Plane,
-  Star,
-  Tags,
   Users,
   UserRound,
 } from "lucide-react";
