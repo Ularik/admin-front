@@ -1,8 +1,10 @@
-import type {
-  TaskCreateType,
-  TaskUpdateType,
-} from "@/types/tasks";
+import type { TaskCreateType, TaskUpdateType } from "@/types/tasks";
 
+function formatDateOnly(date: Date) {
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${date.getFullYear()}-${month}-${day}`;
+}
 
 export default function buildTaskFormData(
   data: TaskUpdateType | TaskCreateType,
@@ -14,8 +16,8 @@ export default function buildTaskFormData(
   if (data.description != null) {
     formData.append("description", data.description);
   }
-  if (data.deadlines) {
-    formData.append("deadlines", data.deadlines.toISOString());
+  if (data.deadlines && !Number.isNaN(data.deadlines.getTime())) {
+    formData.append("deadlines", formatDateOnly(data.deadlines));
   }
   for (const dep_id of data.departments_ids) {
     formData.append("departments_ids", dep_id);

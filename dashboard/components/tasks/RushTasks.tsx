@@ -15,6 +15,7 @@ import {
 import { useTasks } from "@/services/queries/tasks";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { PaginationControl } from "@/components/pagination/pagination";
 import type { TaskType } from "@/types/tasks";
 
@@ -29,11 +30,12 @@ export default function RushTasks({
 }: RushTasksProps) {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
+  const [showExpired, setShowExpired] = useState(false);
   const { data, isPending, isError } = useTasks({
     limit,
     offset: (page - 1) * limit,
-    rush: true,
     department_id: departmentId,
+    ...(showExpired ? { is_expired: true } : { rush: true }),
   });
   const tasks: TaskType[] = data?.items ?? [];
   const total = data?.total ?? 0;
@@ -44,28 +46,47 @@ export default function RushTasks({
     setPage(1);
   };
 
+  const handleModeChange = () => {
+    setShowExpired((isExpired) => !isExpired);
+    setPage(1);
+  };
+
   return (
     <Card className="border-zinc-200 shadow-xs">
       <CardHeader className="flex flex-row items-center justify-between gap-3 px-4 py-3">
         <CardTitle className="flex items-center gap-2 text-base">
           <AlertCircle className="h-4 w-4 text-red-600" />
-          Срочные задачи
+          {showExpired ? "Просроченные задачи" : "Срочные задачи"}
         </CardTitle>
-        {!isPending && !isError && <span className="text-xs text-zinc-500">Всего: {total}</span>}
+        <div className="flex items-center gap-2">
+          {!isPending && !isError && (
+            <span className="text-xs text-zinc-500">Всего: {total}</span>
+          )}
+          <Button
+            type="button"
+            variant="outline"
+            size="xs"
+            onClick={handleModeChange}
+            aria-pressed={showExpired}
+          >
+            {showExpired ? "Показать срочные" : "Показать просроченные"}
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="px-4 pb-4 pt-0">
         {isPending ? (
           <div className="flex items-center justify-center gap-2 py-5 text-sm text-zinc-500">
             <Loader2 className="h-4 w-4 animate-spin" />
-            Загрузка срочных задач...
+            Загрузка {showExpired ? "просроченных" : "срочных"} задач...
           </div>
         ) : isError ? (
           <p className="py-5 text-center text-sm text-red-600">
-            Не удалось загрузить срочные задачи.
+            Не удалось загрузить {showExpired ? "просроченные" : "срочные"}{" "}
+            задачи.
           </p>
         ) : tasks.length === 0 ? (
           <p className="py-5 text-center text-sm text-zinc-500">
-            Срочных задач нет.
+            {showExpired ? "Просроченных задач нет." : "Срочных задач нет."}
           </p>
         ) : (
           <div className="divide-y divide-zinc-100">
@@ -83,14 +104,17 @@ export default function RushTasks({
                       {task.description || "Описание отсутствует"}
                     </p>
                   </div>
-                  <Badge variant="destructive">Срочная</Badge>
+                  <Badge variant="destructive">
+                    {showExpired ? "Просроченная" : "Срочная"}
+                  </Badge>
                 </div>
 
                 <div className="grid gap-1.5 text-[11px] text-zinc-600 sm:grid-cols-2 lg:grid-cols-4">
                   <div>ID: {task.id}</div>
                   <div className="flex items-center gap-1.5">
                     <CalendarClock className="h-3.5 w-3.5 text-zinc-400" />
-                    Срок: {task.deadlines ? formatDate(task.deadlines) : "не указан"}
+                    Срок:{" "}
+                    {task.deadlines ? formatDate(task.deadlines) : "не указан"}
                   </div>
                   <div className="flex items-center gap-1.5">
                     <AlertCircle className="h-3.5 w-3.5 text-zinc-400" />
@@ -112,12 +136,20 @@ export default function RushTasks({
 
                 <div className="flex flex-wrap gap-1">
                   {task.departments.map((department) => (
-                    <Badge key={department.id} variant="secondary" className="px-1.5 py-0 text-[10px]">
+                    <Badge
+                      key={department.id}
+                      variant="secondary"
+                      className="px-1.5 py-0 text-[10px]"
+                    >
                       {department.title}
                     </Badge>
                   ))}
                   {task.executors.map((executor) => (
-                    <Badge key={executor.id} variant="outline" className="px-1.5 py-0 text-[10px]">
+                    <Badge
+                      key={executor.id}
+                      variant="outline"
+                      className="px-1.5 py-0 text-[10px]"
+                    >
                       {executor.last_name} {executor.username}
                     </Badge>
                   ))}

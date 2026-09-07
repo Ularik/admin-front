@@ -25,6 +25,7 @@ export default function TaskStatusCounters({
     from_date: fromDate,
     to_date: toDate,
   });
+
   const { data: activeData } = useTasks({
     limit: 1,
     offset: 0,
@@ -32,6 +33,15 @@ export default function TaskStatusCounters({
     department_id: departmentId,
     from_date: fromDate,
     to_date: toDate,
+  });
+
+  const { data: expiredData } = useTasks({
+    limit: 1,
+    offset: 0,
+    department_id: departmentId,
+    from_date: fromDate,
+    to_date: toDate,
+    is_expired: true,
   });
 
   return (
@@ -54,18 +64,24 @@ export default function TaskStatusCounters({
           дней
         </label>
       </div>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
         <div className="rounded-md border border-emerald-100 bg-emerald-50 px-2 py-2 text-center">
           <p className="text-lg font-semibold leading-none text-emerald-700">
             {doneData?.total ?? 0}
           </p>
-          <p className="mt-1 text-[10px] text-emerald-600">DONE</p>
+          <p className="mt-1 text-[10px] text-emerald-600">ЗАВЕРШЕНЫ</p>
         </div>
         <div className="rounded-md border border-amber-100 bg-amber-50 px-2 py-2 text-center">
           <p className="text-lg font-semibold leading-none text-amber-700">
             {activeData?.total ?? 0}
           </p>
-          <p className="mt-1 text-[10px] text-amber-600">NEW + PROGRESS</p>
+          <p className="mt-1 text-[10px] text-amber-600">НОВЫЕ И В РАБОТЕ</p>
+        </div>
+        <div className="rounded-md border border-red-100 bg-red-50 px-2 py-2 text-center">
+          <p className="text-lg font-semibold leading-none text-red-700">
+            {expiredData?.total ?? 0}
+          </p>
+          <p className="mt-1 text-[10px] text-red-600">ПРОСРОЧЕНЫ</p>
         </div>
       </div>
     </section>

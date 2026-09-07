@@ -25,10 +25,28 @@ import {
 } from "lucide-react";
 
 import type { DocumentLiteType } from "@/types/document";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { useMe } from "@/services/queries/users";
 import { useDepartments } from "@/services/queries/departments";
 import { TaskFormInputs, TaskType } from "@/types/tasks";
+
+function formatDateInput(value: Date | string | null) {
+  if (!value) return "";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${date.getFullYear()}-${month}-${day}`;
+}
 
 interface TaskMainInfoProps {
   task: TaskType;
@@ -61,7 +79,7 @@ export function TaskMainInfo({
 
   const isAdmin = me?.status === "ADMIN";
   const { data: departments = [] } = useDepartments();
-  
+
   const [openDeptSelect, setOpenDeptSelect] = useState(false);
 
   return (
@@ -92,7 +110,7 @@ export function TaskMainInfo({
 
                 const toggleDept = (deptId: string) => {
                   if (!isAdmin) return;
-                  
+
                   const current = new Set(selectedIds);
                   if (current.has(deptId)) {
                     current.delete(deptId);
@@ -103,17 +121,19 @@ export function TaskMainInfo({
                 };
 
                 return (
-                  <Popover 
-                    open={isAdmin ? openDeptSelect : false} 
+                  <Popover
+                    open={isAdmin ? openDeptSelect : false}
                     onOpenChange={isAdmin ? setOpenDeptSelect : undefined}
                   >
-                    <PopoverTrigger 
+                    <PopoverTrigger
                       disabled={!isAdmin}
                       className={buttonVariants({
                         variant: "outline",
                         size: "sm",
                         className: `h-8 text-xs inline-flex items-center justify-center ${
-                          !isAdmin ? "pointer-events-none opacity-50 cursor-not-allowed" : "cursor-pointer"
+                          !isAdmin
+                            ? "pointer-events-none opacity-50 cursor-not-allowed"
+                            : "cursor-pointer"
                         }`,
                       })}
                     >
@@ -136,7 +156,8 @@ export function TaskMainInfo({
                           <CommandGroup>
                             {departments.map((dept) => {
                               const deptIdStr = String(dept.id);
-                              const isSelected = selectedIds.includes(deptIdStr);
+                              const isSelected =
+                                selectedIds.includes(deptIdStr);
 
                               return (
                                 <CommandItem
@@ -147,7 +168,9 @@ export function TaskMainInfo({
                                 >
                                   <div className="flex items-center gap-2 truncate pointer-events-none">
                                     <Building2 className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
-                                    <span className="truncate">{dept.title}</span>
+                                    <span className="truncate">
+                                      {dept.title}
+                                    </span>
                                   </div>
                                   <Check
                                     className={`h-3.5 w-3.5 text-zinc-700 shrink-0 transition-opacity pointer-events-none ${
@@ -202,10 +225,22 @@ export function TaskMainInfo({
                 : "Не указан"}
             </span>
           ) : (
-            <Input
-              type="date"
-              {...register("deadlines", { valueAsDate: true })}
-              className="h-8 w-auto text-sm"
+            <Controller
+              name="deadlines"
+              control={control}
+              render={({ field }) => (
+                <Input
+                  type="date"
+                  value={formatDateInput(field.value)}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    field.onChange(
+                      value ? new Date(`${value}T00:00:00`) : null,
+                    );
+                  }}
+                  className="h-8 w-auto text-sm"
+                />
+              )}
             />
           )}
         </div>

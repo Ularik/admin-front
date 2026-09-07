@@ -50,6 +50,13 @@ interface TaskDetailPageProps {
   replyBasePath?: string;
 }
 
+function parseTaskDeadline(deadline: Date | null) {
+  if (!deadline) return null;
+
+  const parsed = new Date(deadline);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
 export default function TaskDetail({
   task,
   user,
@@ -78,24 +85,23 @@ export default function TaskDetail({
     if (taskDepartments.length !== 1) return false;
 
     const taskDeptId = String(taskDepartments[0].id);
-    console.log(Boolean(userDeptId && taskDeptId === userDeptId))
+    console.log(Boolean(userDeptId && taskDeptId === userDeptId));
     return Boolean(userDeptId && taskDeptId === userDeptId);
   }, [user, task, userDeptId]);
 
   const canReply = useMemo(() => {
     const taskDepartments = task.departments || [];
-    const isExist = taskDepartments.find(dep => {
+    const isExist = taskDepartments.find((dep) => {
       return String(dep.id) === userDeptId;
     });
     if (isExist) return true;
   }, [task, userDeptId]);
 
-
   const form = useForm<TaskFormInputs>({
     defaultValues: {
       title: "",
       description: "",
-        deadlines: null,
+      deadlines: null,
       departments_ids: [],
       executor_ids: [],
     },
@@ -108,7 +114,7 @@ export default function TaskDetail({
       form.reset({
         title: task.title || "",
         description: task.description || "",
-        deadlines: task.deadlines ? new Date(task.deadlines) : null,
+        deadlines: parseTaskDeadline(task.deadlines),
         departments_ids: task.departments?.map((d) => String(d.id)) || [],
         executor_ids: task.executors?.map((e) => String(e.id)) || [],
       });
@@ -122,7 +128,7 @@ export default function TaskDetail({
       form.reset({
         title: task.title || "",
         description: task.description || "",
-        deadlines: task.deadlines ? new Date(task.deadlines) : null,
+        deadlines: parseTaskDeadline(task.deadlines),
         departments_ids: task.departments?.map((d) => String(d.id)) || [],
         executor_ids: task.executors?.map((e) => String(e.id)) || [],
       });
@@ -132,7 +138,6 @@ export default function TaskDetail({
     setIsEditing(false);
   };
 
-
   const onSubmit = async (data: TaskFormInputs) => {
     if (!canEdit) return;
 
@@ -140,7 +145,7 @@ export default function TaskDetail({
       ...data,
       attachments: newFiles,
       old_attachments_ids: existingFiles.map((f) => f.id),
-    }
+    };
     try {
       updateTaskFunc(fullData);
       setIsEditing(false);
@@ -307,8 +312,7 @@ export default function TaskDetail({
           />
 
           {/* Ответы на задачу */}
-          <TaskReplies taskId={task.id}/>
-          
+          <TaskReplies taskId={task.id} />
         </div>
 
         <div className="space-y-6">

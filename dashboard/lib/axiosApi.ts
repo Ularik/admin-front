@@ -5,9 +5,9 @@ export const isDev = process.env.NODE_ENV === "development";
 
 
 export const apiURL = isDev
-  ? "http://localhost:8000/api"
+  ? "http://localhost:8001/api"
   : typeof window === "undefined"
-    ? "http://backend:8000/api" // имя сервиса из docker-compose + внутренний порт
+    ? "http://backend:8001/api" // имя сервиса из docker-compose + внутренний порт
     : "/api";
 
 

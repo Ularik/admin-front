@@ -1,10 +1,6 @@
-import type {
-  TasksApiResponseType,
-  TaskType,
-} from "@/types/tasks";
+import type { TasksApiResponseType, TaskType } from "@/types/tasks";
 import axiosApi from "@/lib/axiosApi";
 import { PagingParams } from "@/types/main";
-
 
 export async function getTasks(
   params: PagingParams,
@@ -13,10 +9,14 @@ export async function getTasks(
   queryParams.set("limit", String(params.limit));
   queryParams.set("offset", String(params.offset));
 
-  if (params.department_id) queryParams.set("department_id", params.department_id);
+  if (params.department_id)
+    queryParams.set("department_id", params.department_id);
   if (params.from_date) queryParams.set("from_date", params.from_date);
   if (params.to_date) queryParams.set("to_date", params.to_date);
   if (params.rush !== undefined) queryParams.set("rush", String(params.rush));
+  if (params.is_expired !== undefined) {
+    queryParams.set("is_expired", String(params.is_expired));
+  }
   params.status?.forEach((status) => queryParams.append("status", status));
 
   const res = await axiosApi.get("/tasks/", {
