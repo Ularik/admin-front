@@ -46,7 +46,11 @@ export function RegisterForm() {
 
   function onSubmit(values: UserRegisterCheckType) {
     const { confirmPassword: _confirmPassword, ...payload } = values;
-    mutate(payload);
+    mutate(payload, {
+      onSuccess: () => {
+        router.push("/login")
+      }
+    });
   }
 
   return (

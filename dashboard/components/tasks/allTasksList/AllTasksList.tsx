@@ -16,12 +16,13 @@ import TaskScopeToggle from "@/components/tasks/taskScopeToggle/TaskScopeToggle"
 import { UserType } from "@/types/user";
 
 interface Props {
-    user: UserType;
-    departmentId?: string;
-    canCreate?: boolean;
-    taskBasePath?: string;
-    taskScope?: "all" | "department";
-    scopeBasePath?: string;
+  user: UserType;
+  departmentId?: string;
+  canCreate?: boolean;
+  taskBasePath?: string;
+  taskScope?: "all" | "department";
+  scopeBasePath?: string;
+  showScopeToggle?: boolean;
 }
 
 export default function AllTasksList({
@@ -31,6 +32,7 @@ export default function AllTasksList({
   taskBasePath = "tasks",
   taskScope,
   scopeBasePath,
+  showScopeToggle = true,
 }: Props) {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
@@ -60,10 +62,7 @@ export default function AllTasksList({
     setPage(1);
   };
 
-  const handleDateChange = (
-    setter: (value: string) => void,
-    value: string,
-  ) => {
+  const handleDateChange = (setter: (value: string) => void, value: string) => {
     setter(value);
     setPage(1);
   };
@@ -79,35 +78,38 @@ export default function AllTasksList({
       {/* Шапка страницы */}
       <div className="flex flex-col gap-4 border-b border-zinc-200 pb-5">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-zinc-900 flex items-center gap-2">
-            <FileText className="h-6 w-6 text-zinc-700" />
-            {taskScope === "department" ? "Задачи отдела" : "Все задачи"}
-          </h1>
-          <p className="text-sm text-zinc-500 mt-1">
-            {taskScope === "department"
-              ? `Задач отдела: ${total}`
-              : `Всего задач в системе: ${total}`}
-          </p>
-        </div>
+          <div>
+            <h1 className="text-2xl font-bold text-zinc-900 flex items-center gap-2">
+              <FileText className="h-6 w-6 text-zinc-700" />
+              {taskScope === "department" ? "Задачи отдела" : "Все задачи"}
+            </h1>
+            <p className="text-sm text-zinc-500 mt-1">
+              {taskScope === "department"
+                ? `Задач отдела: ${total}`
+                : `Всего задач в системе: ${total}`}
+            </p>
+          </div>
 
-        {canCreate ? (
+          {canCreate ? (
             <Link href={`${taskBasePath}/new`}>
               <Button className="bg-zinc-900 hover:bg-zinc-800 text-white shrink-0">
                 <Plus className="h-4 w-4 mr-2" />
                 Создать задачу
               </Button>
             </Link>
-          ): (null)}
+          ) : null}
         </div>
-        {taskScope && (
+        {taskScope && showScopeToggle && (
           <TaskScopeToggle active={taskScope} basePath={scopeBasePath} />
         )}
       </div>
 
       <div className="flex flex-col gap-3 rounded-lg border border-zinc-200 bg-zinc-50/60 p-4 sm:flex-row sm:flex-wrap sm:items-end">
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="tasks-from-date" className="text-xs font-medium text-zinc-600">
+          <label
+            htmlFor="tasks-from-date"
+            className="text-xs font-medium text-zinc-600"
+          >
             С даты
           </label>
           <input
@@ -115,12 +117,17 @@ export default function AllTasksList({
             type="date"
             value={fromDate}
             max={toDate || undefined}
-            onChange={(event) => handleDateChange(setFromDate, event.target.value)}
+            onChange={(event) =>
+              handleDateChange(setFromDate, event.target.value)
+            }
             className="h-9 rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-700 outline-none focus:border-zinc-400 focus:ring-2 focus:ring-zinc-200"
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="tasks-to-date" className="text-xs font-medium text-zinc-600">
+          <label
+            htmlFor="tasks-to-date"
+            className="text-xs font-medium text-zinc-600"
+          >
             По дату
           </label>
           <input
@@ -128,7 +135,9 @@ export default function AllTasksList({
             type="date"
             value={toDate}
             min={fromDate || undefined}
-            onChange={(event) => handleDateChange(setToDate, event.target.value)}
+            onChange={(event) =>
+              handleDateChange(setToDate, event.target.value)
+            }
             className="h-9 rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-700 outline-none focus:border-zinc-400 focus:ring-2 focus:ring-zinc-200"
           />
         </div>
@@ -182,6 +191,7 @@ export default function AllTasksList({
         <TasksDepartments
           tasks={tasks}
           departments={departments}
+          departmentId={departmentId}
           taskBasePath={taskBasePath}
         />
       )}

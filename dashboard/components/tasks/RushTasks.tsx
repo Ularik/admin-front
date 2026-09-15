@@ -30,25 +30,64 @@ export default function RushTasks({
 }: RushTasksProps) {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
-  const [showExpired, setShowExpired] = useState(false);
+
+  // Управляющее состояние режима: "rush" | "extra_rush" | "expired"
+  const [mode, setMode] = useState<"rush" | "extra_rush" | "expired">("rush");
+
+  // Динамическое формирование параметров запроса
+  const queryParams = {
+    rush: mode === "rush" ? true : undefined,
+    extra_rush: mode === "extra_rush" ? true : undefined,
+    is_expired: mode === "expired" ? true : undefined,
+  };
+
   const { data, isPending, isError } = useTasks({
     limit,
     offset: (page - 1) * limit,
     department_id: departmentId,
-    ...(showExpired ? { is_expired: true } : { rush: true }),
+    ...queryParams,
   });
+
   const tasks: TaskType[] = data?.items ?? [];
   const total = data?.total ?? 0;
+
   const formatDate = (date: Date | string) =>
     new Date(date).toLocaleDateString("ru-RU");
+
   const handleLimitChange = (newLimit: number) => {
     setLimit(newLimit);
     setPage(1);
   };
 
+  // Циклическое переключение режимов: Rush -> Extra Rush -> Expired -> Rush
   const handleModeChange = () => {
-    setShowExpired((isExpired) => !isExpired);
+    setMode((prevMode) => {
+      if (prevMode === "rush") return "extra_rush";
+      if (prevMode === "extra_rush") return "expired";
+      return "rush";
+    });
     setPage(1);
+  };
+
+  // Заголовки и подписи для кнопки
+  const titleText = {
+    rush: "Срочные задачи (срок до 3 дней)",
+    extra_rush: "Весьма срочные задачи (срок до 1 дня)",
+    expired: "Просроченные задачи",
+  }[mode];
+
+  const buttonText = {
+    rush: "Показать весьма срочные",
+    extra_rush: "Показать просроченные",
+    expired: "Показать срочные",
+  }[mode];
+
+  const isDueSoon = (deadline: Date) => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(23, 59, 59, 999); // Конец завтрашнего дня
+
+    return new Date(deadline) <= tomorrow;
   };
 
   return (
@@ -56,7 +95,7 @@ export default function RushTasks({
       <CardHeader className="flex flex-row items-center justify-between gap-3 px-4 py-3">
         <CardTitle className="flex items-center gap-2 text-base">
           <AlertCircle className="h-4 w-4 text-red-600" />
-          {showExpired ? "Просроченные задачи" : "Срочные задачи"}
+          {titleText}
         </CardTitle>
         <div className="flex items-center gap-2">
           {!isPending && !isError && (
@@ -67,9 +106,9 @@ export default function RushTasks({
             variant="outline"
             size="xs"
             onClick={handleModeChange}
-            aria-pressed={showExpired}
+            aria-pressed={mode === "expired"}
           >
-            {showExpired ? "Показать срочные" : "Показать просроченные"}
+            {buttonText}
           </Button>
         </div>
       </CardHeader>
@@ -77,17 +116,14 @@ export default function RushTasks({
         {isPending ? (
           <div className="flex items-center justify-center gap-2 py-5 text-sm text-zinc-500">
             <Loader2 className="h-4 w-4 animate-spin" />
-            Загрузка {showExpired ? "просроченных" : "срочных"} задач...
+            Загрузка задач...
           </div>
         ) : isError ? (
           <p className="py-5 text-center text-sm text-red-600">
-            Не удалось загрузить {showExpired ? "просроченные" : "срочные"}{" "}
-            задачи.
+            Не удалось загрузить задачи.
           </p>
         ) : tasks.length === 0 ? (
-          <p className="py-5 text-center text-sm text-zinc-500">
-            {showExpired ? "Просроченных задач нет." : "Срочных задач нет."}
-          </p>
+          <p className="py-5 text-center text-sm text-zinc-500">Задач нет.</p>
         ) : (
           <div className="divide-y divide-zinc-100">
             {tasks.map((task) => (
@@ -104,9 +140,19 @@ export default function RushTasks({
                       {task.description || "Описание отсутствует"}
                     </p>
                   </div>
-                  <Badge variant="destructive">
-                    {showExpired ? "Просроченная" : "Срочная"}
-                  </Badge>
+                  <div className="flex gap-1">
+                    {mode !== "extra_rush" && (
+                      <Badge variant="destructive">
+                        {mode === "expired" ? "Просроченная" : "Срочная"}
+                      </Badge>
+                    )}
+
+                    {(mode === "extra_rush" ||
+                      (mode === "rush" &&
+                        isDueSoon(task.deadlines as Date))) && (
+                      <Badge variant="destructive">Весьма срочно</Badge>
+                    )}
+                  </div>
                 </div>
 
                 <div className="grid gap-1.5 text-[11px] text-zinc-600 sm:grid-cols-2 lg:grid-cols-4">

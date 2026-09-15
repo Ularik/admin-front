@@ -271,6 +271,30 @@ export function TaskMainInfo({
           )}
         </div>
 
+        <div>
+          <h4 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">
+            Ссылки и примечания
+          </h4>
+          {!isEditing ? (
+            form.getValues("note") ? (
+              <p className="text-sm text-zinc-700 whitespace-pre-wrap leading-relaxed">
+                {form.getValues("note")}
+              </p>
+            ) : (
+              <p className="text-xs text-zinc-400 italic">
+                Нет прмечаний
+              </p>
+            )
+          ) : (
+            <Textarea
+              {...register("note")}
+              rows={2}
+              placeholder="Введите ссылку в обмене или напишите примечание..."
+              className="text-sm"
+            />
+          )}
+        </div>
+
         <div className="pt-4 border-t border-zinc-100">
           <h4 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3 flex items-center gap-2">
             <Paperclip className="h-3.5 w-3.5" />

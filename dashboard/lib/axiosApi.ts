@@ -1,15 +1,12 @@
 import axios from "axios";
 
-
 export const isDev = process.env.NODE_ENV === "development";
-
 
 export const apiURL = isDev
   ? "http://localhost:8001/api"
   : typeof window === "undefined"
-    ? "http://backend:8001/api" // имя сервиса из docker-compose + внутренний порт
+    ? "http://backend:8000/api" // имя сервиса из docker-compose + внутренний порт
     : "/api";
-
 
 const axiosApi = axios.create({
   baseURL: apiURL,
@@ -26,7 +23,10 @@ const logoutAndRedirect = async () => {
     console.log("Could not notify services about logout", e);
   }
 
-  if (typeof window !== "undefined" && window.location.pathname !== "/auth/login") {
+  if (
+    typeof window !== "undefined" &&
+    window.location.pathname !== "/auth/login"
+  ) {
     window.location.replace("/login");
   }
 };
@@ -50,7 +50,7 @@ axiosApi.interceptors.response.use(
         return axiosApi(originalRequest);
       } catch (error) {
         // await logoutAndRedirect();
-          console.log()
+        console.log();
         return Promise.reject(error);
       }
     }

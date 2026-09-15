@@ -14,5 +14,7 @@ export default function UserTasksPage() {
 
   if (!user) return null;
 
-  return <DepartmentTasksList user={user} />;
+  return (
+    <DepartmentTasksList user={user} taskBasePath="/users/tasks" canCreate />
+  );
 }

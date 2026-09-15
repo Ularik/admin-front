@@ -79,15 +79,19 @@ export default function TaskDetail({
   const canEdit = useMemo(() => {
     if (!user) return false;
     if (user.status === "ADMIN") return true;
-    if (user.status !== "HEAD") return false;
 
     const taskDepartments = task.departments || [];
     if (taskDepartments.length !== 1) return false;
 
     const taskDeptId = String(taskDepartments[0].id);
-    console.log(Boolean(userDeptId && taskDeptId === userDeptId));
     return Boolean(userDeptId && taskDeptId === userDeptId);
   }, [user, task, userDeptId]);
+
+  const canDelete = useMemo(() => {
+    if (user.status === "ADMIN") return true;
+    if (task.author_id === user.id) return true;
+    return false;
+  }, [user, task]);
 
   const canReply = useMemo(() => {
     const taskDepartments = task.departments || [];
@@ -102,6 +106,7 @@ export default function TaskDetail({
       title: "",
       description: "",
       deadlines: null,
+      note: "",
       departments_ids: [],
       executor_ids: [],
     },
@@ -114,6 +119,7 @@ export default function TaskDetail({
       form.reset({
         title: task.title || "",
         description: task.description || "",
+        note: task.note || "",
         deadlines: parseTaskDeadline(task.deadlines),
         departments_ids: task.departments?.map((d) => String(d.id)) || [],
         executor_ids: task.executors?.map((e) => String(e.id)) || [],
@@ -128,6 +134,7 @@ export default function TaskDetail({
       form.reset({
         title: task.title || "",
         description: task.description || "",
+        note: task.note || "",
         deadlines: parseTaskDeadline(task.deadlines),
         departments_ids: task.departments?.map((d) => String(d.id)) || [],
         executor_ids: task.executors?.map((e) => String(e.id)) || [],
@@ -174,8 +181,8 @@ export default function TaskDetail({
         <div className="p-3 bg-amber-50 border border-amber-200 rounded-md text-xs text-amber-800 flex items-center gap-2">
           <Lock className="h-4 w-4 text-amber-600 shrink-0" />
           {isMultiDepartmentTask
-            ? "Редактирование недоступно: задача затрагивает несколько отделов (только для Администратора)."
-            : "Вы можете только просматривать эту задачу, так как она относится к другому отделу."}
+            ? "Редактирование недоступно: задача затрагивает несколько отделов (только для зам директора)."
+            : "Вы не можете редактировать эту задачу, она не ваша"}
         </div>
       )}
 
@@ -222,42 +229,44 @@ export default function TaskDetail({
                     Редактировать
                   </Button>
 
-                  <AlertDialog>
-                    <AlertDialogTrigger
-                      className={buttonVariants({
-                        variant: "outline",
-                        size: "sm",
-                        className:
-                          "text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700",
-                      })}
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Удалить
-                    </AlertDialogTrigger>
+                  {canDelete && (
+                    <AlertDialog>
+                      <AlertDialogTrigger
+                        className={buttonVariants({
+                          variant: "outline",
+                          size: "sm",
+                          className:
+                            "text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700",
+                        })}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Удалить
+                      </AlertDialogTrigger>
 
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Удалить задачу?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Это действие нельзя отменить. Задача будет
-                          безвозвратно удалена из системы.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Отмена</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => deleteTaskFunc()}
-                          disabled={isDeleting}
-                          className="bg-red-600 hover:bg-red-700 text-white"
-                        >
-                          {isDeleting && (
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          )}
-                          Удалить
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Удалить задачу?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Это действие нельзя отменить. Задача будет
+                            безвозвратно удалена из системы.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Отмена</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => deleteTaskFunc()}
+                            disabled={isDeleting}
+                            className="bg-red-600 hover:bg-red-700 text-white"
+                          >
+                            {isDeleting && (
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            )}
+                            Удалить
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
                 </>
               ) : (
                 <>

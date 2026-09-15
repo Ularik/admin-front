@@ -16,6 +16,10 @@ export default function buildTaskFormData(
   if (data.description != null) {
     formData.append("description", data.description);
   }
+  
+  if (data.note != null) {
+    formData.append("note", data.note);
+  }
   if (data.deadlines && !Number.isNaN(data.deadlines.getTime())) {
     formData.append("deadlines", formatDateOnly(data.deadlines));
   }

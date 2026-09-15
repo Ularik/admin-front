@@ -16,7 +16,7 @@ export default function AdminLayout({ children }: Props) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   return (
-    <ProtectedLayout roles={["ADMIN", "HEAD", "USER"]}>
+    <ProtectedLayout roles={["ADMIN", "HEAD", "DEPUTY", "USER"]}>
       <div className="min-h-screen bg-slate-100">
         <Sidebar
           collapsed={isSidebarCollapsed}

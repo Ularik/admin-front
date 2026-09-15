@@ -10,14 +10,20 @@ import { Badge } from "@/components/ui/badge";
 interface Props {
   departments: DepartmentType[];
   tasks: TaskType[];
+  departmentId?: string;
   taskBasePath?: string;
 }
 
 export default function TasksDepartments({
   departments,
   tasks,
+  departmentId,
   taskBasePath = "tasks",
 }: Props) {
+  const visibleDepartments = departmentId
+    ? departments.filter((department) => department.id === departmentId)
+    : departments;
+
   // Группируем задачи по массиву departments
   const tasksByDepartment = useMemo(() => {
     const map = new Map<string | null, TaskType[]>();
@@ -26,7 +32,7 @@ export default function TasksDepartments({
     map.set(null, []);
 
     // Инициализируем массив под каждый отдел
-    departments.forEach((dept) => {
+    visibleDepartments.forEach((dept) => {
       map.set(String(dept.id), []);
     });
 
@@ -58,7 +64,7 @@ export default function TasksDepartments({
     });
 
     return map;
-  }, [departments, tasks]);
+  }, [tasks, visibleDepartments]);
 
   const unassignedTasks = tasksByDepartment.get(null) || [];
 
@@ -67,7 +73,7 @@ export default function TasksDepartments({
       {/* Контейнер колонок Канбана */}
       <div className="flex gap-4 min-w-max items-start">
         {/* 1. Колонка для отделов */}
-        {departments.map((dept) => {
+        {visibleDepartments.map((dept) => {
           const deptTasks = tasksByDepartment.get(String(dept.id)) || [];
 
           return (

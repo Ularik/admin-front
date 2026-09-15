@@ -14,7 +14,7 @@ export default function HeadsTasksPage() {
 
   if (!user) return null;
 
-  return <DepartmentTasksList user={user} scopeBasePath="/heads/tasks" />;
+  return (
+    <DepartmentTasksList user={user} taskBasePath="/heads/tasks" canCreate />
+  );
 }
-
-

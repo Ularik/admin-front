@@ -32,7 +32,7 @@ const ProtectedLayout = ({ children, roles }: Props) => {
         return;
     }
 
-    if (pathname.startsWith('/heads') && (user.status !== 'HEAD' && user.status !== 'ADMIN')) {
+    if (pathname.startsWith('/heads') && (user.status !== 'HEAD' && user.status !== 'DEPUTY' && user.status !== 'ADMIN')) {
         router.replace(roleDashboardPaths[user.status]);
     }
 

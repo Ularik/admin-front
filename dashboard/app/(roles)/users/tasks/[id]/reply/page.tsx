@@ -24,9 +24,10 @@ export default function UserReplyPage({
   }
 
   const isAssignedExecutor = Boolean(
-    user?.id && task?.executors?.some((executor) => executor.id === user.id),
+    user?.department_id &&
+    task?.executors?.some((executor) => executor.id === user.department_id),
   );
-
+  
   if (!task || !isAssignedExecutor) {
     return (
       <div className="mx-auto max-w-xl space-y-5 p-6">

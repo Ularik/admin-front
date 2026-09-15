@@ -5,6 +5,7 @@ export interface PagingParams {
   from_date?: string;
   to_date?: string;
   rush?: boolean;
+  extra_rush?: boolean;
   is_expired?: boolean;
   status?: string[];
 }

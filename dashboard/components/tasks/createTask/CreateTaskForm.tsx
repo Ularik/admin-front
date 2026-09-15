@@ -66,6 +66,7 @@ export default function CreateTaskForm({
   const { data: departments = [] } = useDepartments();
   const { data: users = [] } = useUsers();
 
+  const isDepartmentLocked = user?.status === "HEAD" || user?.status === "USER";
   const isHead = user?.status === "HEAD";
   const userDeptId = user?.department_id ? String(user.department_id) : null;
 
@@ -80,8 +81,9 @@ export default function CreateTaskForm({
     defaultValues: {
       title: "",
       description: "",
+      note: "",
       deadlines: null,
-      departments_ids: isHead && userDeptId ? [userDeptId] : [],
+      departments_ids: isDepartmentLocked && userDeptId ? [userDeptId] : [],
       executor_ids: [],
       attachments: [],
     },
@@ -93,10 +95,10 @@ export default function CreateTaskForm({
 
   // Если зашел HEAD — принудительно фиксируем его отдел
   useEffect(() => {
-    if (isHead && userDeptId) {
+    if (isDepartmentLocked && userDeptId) {
       setValue("departments_ids", [userDeptId]);
     }
-  }, [isHead, userDeptId, setValue]);
+  }, [isDepartmentLocked, userDeptId, setValue]);
 
   // Фильтруем сотрудников по выбранным отделам (если ни один отдел не выбран — показываем всех)
   const filteredUsers = useMemo(() => {
@@ -148,9 +150,21 @@ export default function CreateTaskForm({
     setServerError(null);
     try {
       await submitFunc(data);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const detail =
+        typeof err === "object" &&
+        err !== null &&
+        "response" in err &&
+        typeof err.response === "object" &&
+        err.response !== null &&
+        "data" in err.response &&
+        typeof err.response.data === "object" &&
+        err.response.data !== null &&
+        "detail" in err.response.data
+          ? err.response.data.detail
+          : null;
       setServerError(
-        err?.response?.data?.detail || "Ошибка при создании задачи",
+        typeof detail === "string" ? detail : "Ошибка при создании задачи",
       );
     }
   };
@@ -208,7 +222,26 @@ export default function CreateTaskForm({
                 rows={4}
                 placeholder="Подробное описание задачи..."
                 className="resize-y"
-                {...register("description")}
+                {...register("description", {
+                  setValueAs: (value: string) =>
+                    typeof value === "string" ? value.trim() : value,
+                })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="description">
+                Ссылки на обмен или примечание
+              </Label>
+              <Textarea
+                id="note"
+                rows={4}
+                placeholder="Ссылки или примечания..."
+                className="resize-y"
+                {...register("note", {
+                  setValueAs: (value: string) =>
+                    typeof value === "string" ? value.trim() : value,
+                })}
               />
             </div>
 
@@ -240,7 +273,7 @@ export default function CreateTaskForm({
                   const selectedIds: string[] = field.value || [];
 
                   const toggleDept = (deptId: string) => {
-                    if (isHead) return; // Запрещаем менять выбор, если HEAD
+                    if (isDepartmentLocked) return;
                     const current = new Set(selectedIds);
                     if (current.has(deptId)) {
                       current.delete(deptId);
@@ -252,7 +285,7 @@ export default function CreateTaskForm({
 
                   return (
                     <div className="space-y-2">
-                      {!isHead && (
+                      {!isDepartmentLocked && (
                         <Popover
                           open={openDeptSelect}
                           onOpenChange={setOpenDeptSelect}
@@ -338,7 +371,7 @@ export default function CreateTaskForm({
                                 className="bg-zinc-100 text-zinc-700 text-xs gap-1 font-normal"
                               >
                                 {dept.title}
-                                {!isHead && (
+                                {!isDepartmentLocked && (
                                   <X
                                     className="h-3 w-3 cursor-pointer text-zinc-400 hover:text-zinc-700"
                                     onClick={() => toggleDept(id)}

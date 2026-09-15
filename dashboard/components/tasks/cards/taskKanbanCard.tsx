@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Building2, Users, Calendar, CalendarClock, Pencil } from "lucide-react";
+import {
+  Building2,
+  Users,
+  Calendar,
+  CalendarClock,
+  Pencil,
+} from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,7 +21,10 @@ interface Props {
   taskBasePath?: string;
 }
 
-export default function TaskKanbanCard({ task, taskBasePath = "tasks" }: Props) {
+export default function TaskKanbanCard({
+  task,
+  taskBasePath = "tasks",
+}: Props) {
   const router = useRouter();
   const { data: me } = useMe();
 
@@ -29,8 +38,7 @@ export default function TaskKanbanCard({ task, taskBasePath = "tasks" }: Props) 
   // Проверяем, входит ли отдел текущего пользователя в список отделов задачи
   const canEdit =
     me?.status === "ADMIN" ||
-    (me?.status === "HEAD" &&
-      Boolean(me?.department_id) &&
+    (Boolean(me?.department_id) &&
       task.departments?.some(
         (dept) => String(dept.id) === String(me?.department_id),
       ) &&
@@ -125,7 +133,10 @@ export default function TaskKanbanCard({ task, taskBasePath = "tasks" }: Props) 
               <Calendar className="h-3 w-3" />
               <span>{formatDate(task.created_at)}</span>
             </div>
-            <div onClick={(event) => event.stopPropagation()} onPointerDown={(event) => event.stopPropagation()}>
+            <div
+              onClick={(event) => event.stopPropagation()}
+              onPointerDown={(event) => event.stopPropagation()}
+            >
               <TaskStatusSelect
                 taskId={task.id}
                 status={task.status}
