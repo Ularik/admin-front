@@ -1,4 +1,5 @@
 import {
+  Building2,
   LayoutDashboard,
   type LucideIcon,
   Newspaper,
@@ -9,8 +10,16 @@ import {
 
 import type { UserRole } from "@/types/user";
 
+export const ADMIN_ACCESS_ROLES: UserRole[] = [
+  "ADMIN",
+  "DIVISION_HEAD",
+  "MANAGEMENT_HEAD",
+];
+
 export const roleDashboardPaths: Record<UserRole, string> = {
   ADMIN: "/admin",
+  DIVISION_HEAD: "/admin",
+  MANAGEMENT_HEAD: "/admin",
   HEAD: "/heads",
   DEPUTY: "/heads",
   USER: "/users",
@@ -27,25 +36,31 @@ export const dashboardMenuItems: DashboardMenuItem[] = [
   {
     label: "Панель",
     href: "/admin",
-    roles: ["ADMIN"],
+    roles: ADMIN_ACCESS_ROLES,
     icon: LayoutDashboard,
   },
   {
     label: "Отделы",
     href: "/admin/departments",
-    roles: ["ADMIN"],
+    roles: ADMIN_ACCESS_ROLES,
     icon: Users,
+  },
+  {
+    label: "Управления",
+    href: "/admin/managements",
+    roles: ["ADMIN", "DIVISION_HEAD", "MANAGEMENT_HEAD"],
+    icon: Building2,
   },
   {
     label: "Задачи",
     href: "/admin/tasks",
-    roles: ["ADMIN"],
+    roles: ADMIN_ACCESS_ROLES,
     icon: Newspaper,
   },
   {
     label: "Сотрудники",
     href: "/admin/executors",
-    roles: ["ADMIN"],
+    roles: ADMIN_ACCESS_ROLES,
     icon: Plane,
   },
   {

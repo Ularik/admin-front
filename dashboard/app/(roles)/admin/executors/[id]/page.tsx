@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { UserUpdateType } from "@/types/user";
+import { useMe } from "@/services/queries/users";
 
 
 interface Props {
@@ -17,6 +18,7 @@ interface Props {
 export default function ExecutorDetailPage({ params }: Props) {
   const { id } = use(params);
   const router = useRouter();
+  const { data: currentUser } = useMe();
   const { data: user, isPending: isUserLoading } = useUserDetail(id);
   
   const { mutateAsync: updateUser, isPending: isUpdating, error: updateError } = useAdminUserUpdate();
@@ -60,7 +62,10 @@ export default function ExecutorDetailPage({ params }: Props) {
     handleUpdate={handleUpdate}
     isDeleting={isDeleting} 
     handleDelete={handleDelete} 
-    serverError={error || updateError}/>)}
+    serverError={error || updateError}
+    isAdmin={currentUser?.status === "ADMIN" || currentUser?.status === "DIVISION_HEAD"}
+    isManagementHead={currentUser?.status === "MANAGEMENT_HEAD"}
+    />)}
     </>
   )
 }

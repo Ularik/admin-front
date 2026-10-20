@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useMemo } from "react";
+import { AxiosError } from "axios";
 
 export default function DepDetail() {
   const params = useParams();
@@ -37,22 +38,37 @@ export default function DepDetail() {
     return {
       title: department.title,
       description: department.description,
-      head_id: department.head?.id ?? null,
-      deputy_head_id: department.deputy_head?.id ?? null,
+      management_id: department.management_id,
+      head_id: department.head ? Number(department.head.id) : null,
+      deputy_head_id: department.deputy_head
+        ? Number(department.deputy_head.id)
+        : null,
     };
   }, [department]);
 
   const handleUpdate = (data: DepartmentCreateType) => {
     if (!id) return;
+    if (data.management_id === null) {
+      toast.error("Выберите управление");
+      return;
+    }
 
-    const payload: DepartmentUpdateType = { id, ...data };
+    const payload: DepartmentUpdateType = {
+      ...data,
+      id,
+      management_id: data.management_id,
+    };
 
     updateDep(payload, {
       onSuccess: () => {
         toast.success("Данные отдела успешно обновлены");
       },
       onError: (error) => {
-        toast.error("Не удалось обновить отдел");
+        const detail =
+          error instanceof AxiosError
+            ? error.response?.data?.detail
+            : undefined;
+        toast.error(detail || "Не удалось обновить отдел");
         console.error("Update department error:", error);
       },
     });

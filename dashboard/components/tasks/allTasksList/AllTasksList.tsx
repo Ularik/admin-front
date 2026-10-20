@@ -8,12 +8,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDepartments } from "@/services/queries/departments";
+import { useManagements } from "@/services/queries/managements";
 import type { TaskType } from "@/types/tasks";
 import { useTasks } from "@/services/queries/tasks";
 import { PaginationControl } from "@/components/pagination/pagination";
 import TasksDepartments from "@/components/tasks/tasksDepartments";
 import TaskScopeToggle from "@/components/tasks/taskScopeToggle/TaskScopeToggle";
 import { UserType } from "@/types/user";
+import { ADMIN_ACCESS_ROLES } from "@/constants/main";
+
+const EMPTY_TASKS: TaskType[] = [];
 
 interface Props {
   user: UserType;
@@ -28,7 +32,8 @@ interface Props {
 export default function AllTasksList({
   user,
   departmentId,
-  canCreate = user.status === "ADMIN" || Boolean(user.department_id),
+  canCreate =
+    ADMIN_ACCESS_ROLES.includes(user.status) || Boolean(user.department_id),
   taskBasePath = "tasks",
   taskScope,
   scopeBasePath,
@@ -39,22 +44,57 @@ export default function AllTasksList({
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [rushOnly, setRushOnly] = useState(false);
+  const [requestedManagementId, setRequestedManagementId] = useState(
+    user.management_id ? String(user.management_id) : "",
+  );
 
   const offset = (page - 1) * limit;
 
-  const { data, isLoading, isError } = useTasks({
+  const { data: departments = [] } = useDepartments();
+  const {
+    data: managements = [],
+    isLoading: isManagementsLoading,
+    isError: isManagementsError,
+  } = useManagements();
+
+  const selectedManagementId = managements.some(
+    (management) => String(management.id) === requestedManagementId,
+  )
+    ? requestedManagementId
+    : managements.length > 0
+      ? String(
+          (
+            managements.find(
+              (management) =>
+                String(management.id) === String(user.management_id),
+            ) ?? managements[0]
+          ).id,
+        )
+      : isManagementsLoading
+        ? requestedManagementId
+        : "";
+  const { data, isLoading: isTasksLoading, isError: isTasksError } = useTasks({
     limit,
     offset,
     department_id: departmentId,
+    management_id:
+      taskScope === "department" ? undefined : selectedManagementId,
     from_date: fromDate || undefined,
     to_date: toDate || undefined,
     rush: rushOnly || undefined,
   });
 
-  const { data: departments = [] } = useDepartments();
-
-  const tasks: TaskType[] = data?.items ?? [];
+  const tasks: TaskType[] = data?.items ?? EMPTY_TASKS;
   const total = data?.total ?? 0;
+  const selectedManagement = managements.find(
+    (management) => String(management.id) === selectedManagementId,
+  );
+  const isLoading =
+    isManagementsLoading ||
+    (taskScope === "department" ? isTasksLoading : Boolean(selectedManagementId) && isTasksLoading);
+  const isError =
+    isManagementsError ||
+    (Boolean(selectedManagementId) && isTasksError);
 
   // Обработчик смены размера страницы (сбрасываем на 1-ю страницу)
   const handleLimitChange = (newLimit: number) => {
@@ -86,7 +126,7 @@ export default function AllTasksList({
             <p className="text-sm text-zinc-500 mt-1">
               {taskScope === "department"
                 ? `Задач отдела: ${total}`
-                : `Всего задач в системе: ${total}`}
+                : `Задач управления: ${total}`}
             </p>
           </div>
 
@@ -102,7 +142,38 @@ export default function AllTasksList({
         {taskScope && showScopeToggle && (
           <TaskScopeToggle active={taskScope} basePath={scopeBasePath} />
         )}
-      </div>
+        {taskScope !== "department" && !isManagementsLoading && (
+          managements.length > 0 ? (
+            <div className="flex flex-col gap-1.5">
+              <label
+                htmlFor="tasks-management"
+                className="text-xs font-medium text-zinc-600"
+              >
+                Управление
+              </label>
+              <select
+                id="tasks-management"
+                value={selectedManagementId}
+                onChange={(event) => {
+                  setRequestedManagementId(event.target.value);
+                  setPage(1);
+                }}
+                className="h-9 w-full max-w-sm rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-700 outline-none focus:border-zinc-400 focus:ring-2 focus:ring-zinc-200"
+              >
+                {managements.map((management) => (
+                  <option key={management.id} value={String(management.id)}>
+                    {management.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : (
+            <p className="text-sm text-zinc-500">
+              Управления для отображения задач не найдены.
+            </p>
+          )
+        )}
+        </div>
 
       <div className="flex flex-col gap-3 rounded-lg border border-zinc-200 bg-zinc-50/60 p-4 sm:flex-row sm:flex-wrap sm:items-end">
         <div className="flex flex-col gap-1.5">
@@ -177,6 +248,15 @@ export default function AllTasksList({
       {/* Список задач */}
       {isLoading ? (
         <TasksSkeleton limit={limit} />
+      ) : taskScope !== "department" && !selectedManagementId ? (
+        <Card className="border-dashed border-zinc-300 bg-zinc-50/50">
+          <CardContent className="p-12 text-center space-y-3">
+            <FileText className="h-10 w-10 mx-auto text-zinc-400" />
+            <p className="text-zinc-600 font-medium">
+              Выберите управление для просмотра задач
+            </p>
+          </CardContent>
+        </Card>
       ) : tasks.length === 0 ? (
         <Card className="border-dashed border-zinc-300 bg-zinc-50/50">
           <CardContent className="p-12 text-center space-y-3">
@@ -188,12 +268,30 @@ export default function AllTasksList({
           </CardContent>
         </Card>
       ) : (
-        <TasksDepartments
-          tasks={tasks}
-          departments={departments}
-          departmentId={departmentId}
-          taskBasePath={taskBasePath}
-        />
+        taskScope === "department" ? (
+          <TasksDepartments
+            tasks={tasks}
+            departments={departments}
+            departmentId={departmentId}
+            taskBasePath={taskBasePath}
+          />
+        ) : (
+          <section className="space-y-3">
+            {selectedManagement && (
+              <h2 className="border-b border-zinc-200 pb-2 text-lg font-semibold text-zinc-800">
+                {selectedManagement.title}
+              </h2>
+            )}
+            <TasksDepartments
+              tasks={tasks}
+              departments={departments.filter(
+                (department) =>
+                  String(department.management_id) === selectedManagementId,
+              )}
+              taskBasePath={taskBasePath}
+            />
+          </section>
+        )
       )}
 
       {/* Пагинация */}

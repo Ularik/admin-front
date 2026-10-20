@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import type { TaskType } from "@/types/tasks";
 import { useMe } from "@/services/queries/users";
 import TaskStatusSelect from "@/components/tasks/taskStatusSelect/TaskStatusSelect";
+import { ADMIN_ACCESS_ROLES } from "@/constants/main";
 
 interface Props {
   task: TaskType;
@@ -37,7 +38,7 @@ export default function TaskKanbanCard({
 
   // Проверяем, входит ли отдел текущего пользователя в список отделов задачи
   const canEdit =
-    me?.status === "ADMIN" ||
+    Boolean(me && ADMIN_ACCESS_ROLES.includes(me.status)) ||
     (Boolean(me?.department_id) &&
       task.departments?.some(
         (dept) => String(dept.id) === String(me?.department_id),

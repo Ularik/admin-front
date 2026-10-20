@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
-import { roleDashboardPaths } from "@/constants/main";
+import { ADMIN_ACCESS_ROLES, roleDashboardPaths } from "@/constants/main";
 import type { UserRole } from "@/types/user";
 import { useMe } from "@/services/queries/users";
 
@@ -27,13 +27,19 @@ const ProtectedLayout = ({ children, roles }: Props) => {
       return;
     }
     
-    if (pathname.startsWith('/admin') && user.status !== 'ADMIN') {
-        router.replace(roleDashboardPaths[user.status]);
-        return;
+    if (
+      pathname.startsWith("/admin") &&
+      !ADMIN_ACCESS_ROLES.includes(user.status)
+    ) {
+      router.replace(roleDashboardPaths[user.status]);
+      return;
     }
 
-    if (pathname.startsWith('/heads') && (user.status !== 'HEAD' && user.status !== 'DEPUTY' && user.status !== 'ADMIN')) {
-        router.replace(roleDashboardPaths[user.status]);
+    if (
+      pathname.startsWith("/heads") &&
+      ![...ADMIN_ACCESS_ROLES, "HEAD", "DEPUTY"].includes(user.status)
+    ) {
+      router.replace(roleDashboardPaths[user.status]);
     }
 
     if (!roles.includes(user.status)) {

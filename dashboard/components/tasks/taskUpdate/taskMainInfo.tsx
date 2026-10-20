@@ -34,6 +34,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { useMe } from "@/services/queries/users";
+import { ADMIN_ACCESS_ROLES } from "@/constants/main";
 import { useDepartments } from "@/services/queries/departments";
 import { TaskFormInputs, TaskType } from "@/types/tasks";
 
@@ -77,7 +78,7 @@ export function TaskMainInfo({
 
   const { data: me } = useMe();
 
-  const isAdmin = me?.status === "ADMIN";
+  const isAdmin = Boolean(me && ADMIN_ACCESS_ROLES.includes(me.status));
   const { data: departments = [] } = useDepartments();
 
   const [openDeptSelect, setOpenDeptSelect] = useState(false);

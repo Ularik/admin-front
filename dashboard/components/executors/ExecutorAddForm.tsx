@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, Controller } from "react-hook-form";
 import { ArrowLeft, UserPlus, Loader2 } from "lucide-react";
+import { AxiosError } from "axios";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +27,17 @@ import {
 import type { UserRegisterType, UserType } from "@/types/user";
 import { useRegisterMutation } from "@/services/queries/users";
 import { useDepartments } from "@/services/queries/departments";
+import { useManagements } from "@/services/queries/managements";
+import { useMe } from "@/services/queries/users";
+import { useAdminUserCreate } from "@/services/queries/admin/users";
+
+const ROLE_OPTIONS = {
+  USER: "Сотрудник (USER)",
+  DEPUTY: "Заместитель начальника отдела (DEPUTY)",
+  HEAD: "Начальник отдела (HEAD)",
+  MANAGEMENT_HEAD: "Начальник управления (MANAGEMENT_HEAD)",
+  DIVISION_HEAD: "Руководитель подразделения (DIVISION_HEAD)",
+} as const;
 
 interface Props {
     head?: UserType
@@ -33,8 +45,34 @@ interface Props {
 
 export default function ExecutorAddForm({ head }: Props) {
   const router = useRouter();
-  const createUser = useRegisterMutation();
-  const { data: departments = [] } = useDepartments();
+  const registerUser = useRegisterMutation();
+  const createAdminUser = useAdminUserCreate();
+  const { data: currentUser } = useMe();
+  const { data: allDepartments = [], isLoading: isDepartmentsLoading } =
+    useDepartments();
+  const { data: managements = [], isLoading: isManagementsLoading } =
+    useManagements();
+  const currentRole = currentUser?.status;
+  const allowedRoles =
+    currentRole === "MANAGEMENT_HEAD"
+      ? (["USER", "DEPUTY", "HEAD"] as const)
+      : currentRole === "ADMIN" || currentRole === "DIVISION_HEAD"
+        ? ([
+            "USER",
+            "DEPUTY",
+            "HEAD",
+            "MANAGEMENT_HEAD",
+            "DIVISION_HEAD",
+          ] as const)
+        : [];
+  const departments =
+    currentRole === "MANAGEMENT_HEAD"
+      ? allDepartments.filter(
+          (department) =>
+            String(department.management_id) ===
+            String(currentUser?.management_id),
+        )
+      : allDepartments;
 
   const [serverError, setServerError] = useState<string | null>(null);
 
@@ -42,6 +80,8 @@ export default function ExecutorAddForm({ head }: Props) {
     register,
     handleSubmit,
     control,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<UserRegisterType>({
     defaultValues: {
@@ -50,20 +90,41 @@ export default function ExecutorAddForm({ head }: Props) {
       password: "",
       status: "USER",
       department_id: head? head.department_id : null,
+      management_id: null,
     },
   });
+
+  const selectedRole = watch("status");
+  const requiresDepartment =
+    Boolean(head) ||
+    selectedRole === "HEAD" ||
+    selectedRole === "DEPUTY" ||
+    currentRole === "MANAGEMENT_HEAD";
 
   const onSubmit = async (data: UserRegisterType) => {
     setServerError(null);
 
     try {
-      await createUser.mutateAsync(data);
+      const payload: UserRegisterType = {
+        ...data,
+        department_id: data.department_id
+          ? String(data.department_id)
+          : null,
+        management_id:
+          data.status === "MANAGEMENT_HEAD" ? data.management_id : null,
+      };
+      if (head) {
+        await registerUser.mutateAsync(payload);
+      } else {
+        await createAdminUser.mutateAsync(payload);
+      }
       router.back();
-    } catch (err: any) {
-      setServerError(
-        err.response?.data?.detail ||
-          "Ошибка при создании сотрудника. Попробуйте снова.",
-      );
+    } catch (error) {
+      const detail =
+        error instanceof AxiosError
+          ? error.response?.data?.detail
+          : undefined;
+      setServerError(detail || "Ошибка при создании сотрудника. Попробуйте снова.");
     }
   };
 
@@ -155,21 +216,26 @@ export default function ExecutorAddForm({ head }: Props) {
                   control={control}
                   rules={{ required: "Выберите роль" }}
                   render={({ field }) => (
-                    <Select value={field.value} onValueChange={field.onChange}>
+                    <Select
+                      value={field.value ?? undefined}
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        if (value === "MANAGEMENT_HEAD") {
+                          setValue("department_id", null);
+                        } else {
+                          setValue("management_id", null);
+                        }
+                      }}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Выберите роль" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="USER">Сотрудник (USER)</SelectItem>
-                        <SelectItem value="DEPUTY">
-                          Зам. начальника (DEPUTY)
-                        </SelectItem>
-                        <SelectItem value="HEAD">
-                          Начальник отдела (HEAD)
-                        </SelectItem>
-                        <SelectItem value="ADMIN">
-                          Администратор (ADMIN)
-                        </SelectItem>
+                        {allowedRoles.map((role) => (
+                          <SelectItem key={role} value={role}>
+                            {ROLE_OPTIONS[role]}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   )}
@@ -182,15 +248,69 @@ export default function ExecutorAddForm({ head }: Props) {
               </div>
             )}
 
+            {!head && selectedRole === "MANAGEMENT_HEAD" && (
+              <div className="space-y-2">
+                <Label>Управление *</Label>
+                <Controller
+                  name="management_id"
+                  control={control}
+                  rules={{
+                    required: "Выберите управление",
+                    validate: (value) => value !== null || "Выберите управление",
+                  }}
+                  render={({ field }) => (
+                    <Select
+                      disabled={isManagementsLoading}
+                      value={field.value ? String(field.value) : "none"}
+                      onValueChange={(value) =>
+                        field.onChange(value === "none" ? null : Number(value))
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Выберите управление" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {managements.map((management) => (
+                          <SelectItem
+                            key={management.id}
+                            value={String(management.id)}
+                          >
+                            {management.title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {errors.management_id && (
+                  <p className="text-xs text-red-500">
+                    {errors.management_id.message}
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* Отдел (department_id) */}
             {!head && (
               <div className="space-y-2">
-                <Label>Отдел</Label>
+                <Label>
+                  Отдел {requiresDepartment && <span className="text-red-500">*</span>}
+                </Label>
                 <Controller
                   name="department_id"
                   control={control}
+                  rules={
+                    requiresDepartment
+                      ? {
+                          required: "Выберите отдел",
+                          validate: (value) =>
+                            value !== null || "Выберите отдел",
+                        }
+                      : undefined
+                  }
                   render={({ field }) => (
                     <Select
+                      disabled={isDepartmentsLoading}
                       value={
                         field.value !== null && field.value !== undefined
                           ? String(field.value)
@@ -204,7 +324,9 @@ export default function ExecutorAddForm({ head }: Props) {
                         <SelectValue placeholder="Выберите отдел" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="none">Без отдела</SelectItem>
+                        {!requiresDepartment && (
+                          <SelectItem value="none">Без отдела</SelectItem>
+                        )}
                         {departments.map((dept) => (
                           <SelectItem key={dept.id} value={String(dept.id)}>
                             {dept.title || `Отдел #${dept.id}`}
@@ -214,6 +336,18 @@ export default function ExecutorAddForm({ head }: Props) {
                     </Select>
                   )}
                 />
+                {errors.department_id && (
+                  <p className="text-xs text-red-500">
+                    {errors.department_id.message}
+                  </p>
+                )}
+                {currentRole === "MANAGEMENT_HEAD" &&
+                  !isDepartmentsLoading &&
+                  departments.length === 0 && (
+                    <p className="text-xs text-red-500">
+                      В вашем управлении пока нет отделов.
+                    </p>
+                  )}
               </div>
             )}
 
@@ -228,10 +362,10 @@ export default function ExecutorAddForm({ head }: Props) {
               </Button>
               <Button
                 type="submit"
-                disabled={createUser.isPending}
+                disabled={registerUser.isPending || createAdminUser.isPending}
                 className="bg-zinc-900 text-white hover:bg-zinc-800"
               >
-                {createUser.isPending && (
+                {(registerUser.isPending || createAdminUser.isPending) && (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 )}
                 Создать сотрудника

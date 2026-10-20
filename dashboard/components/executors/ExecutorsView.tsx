@@ -8,6 +8,9 @@ import {
   Search,
   UserCheck,
   Building2,
+  Shield,
+  ShieldCheck,
+  BriefcaseBusiness,
 } from "lucide-react";
 import { useState, useMemo } from "react";
 
@@ -17,21 +20,55 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmployeeCard } from "@/components/users/usersCard";
 import { useUsers } from "@/services/queries/users";
+import { useManagements } from "@/services/queries/managements";
+import { useDepartments } from "@/services/queries/departments";
+import { useMe } from "@/services/queries/users";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import type { UserRole, UserWithDepartment } from "@/types/user";
 
-export interface UserWithDepartment {
-  id: string;
-  username: string;
-  last_name: string | null;
-  status: string;
-  department_id: string | null;
-  department_title: string | null;
-}
-
-const STATUS_PRIORITY: Record<string, number> = {
-  ADMIN: 1,
-  HEAD: 2,
-  DEPUTY: 3,
-};
+const LEADERSHIP_SECTIONS: {
+  role: Exclude<UserRole, "USER">;
+  title: string;
+  icon: typeof Crown;
+  iconClass: string;
+}[] = [
+  {
+    role: "ADMIN",
+    title: "Администраторы",
+    icon: ShieldCheck,
+    iconClass: "text-purple-600",
+  },
+  {
+    role: "DIVISION_HEAD",
+    title: "Руководители подразделений",
+    icon: BriefcaseBusiness,
+    iconClass: "text-indigo-600",
+  },
+  {
+    role: "MANAGEMENT_HEAD",
+    title: "Начальники управлений",
+    icon: Building2,
+    iconClass: "text-teal-600",
+  },
+  {
+    role: "HEAD",
+    title: "Начальники отделов",
+    icon: Crown,
+    iconClass: "text-amber-500",
+  },
+  {
+    role: "DEPUTY",
+    title: "Заместители начальников",
+    icon: Shield,
+    iconClass: "text-blue-500",
+  },
+];
 
 interface ExecutorsViewProps {
   /** Разрешить ли отображение кнопки "Добавить" */
@@ -45,30 +82,57 @@ export default function ExecutorsView({
   readOnly = false,
   editBasePath,
 }: ExecutorsViewProps) {
+  const { data: currentUser } = useMe();
+  const isManagementHead = currentUser?.status === "MANAGEMENT_HEAD";
   const { data: users = [], isLoading, isError } = useUsers();
+  const {
+    data: managements = [],
+    isLoading: isManagementsLoading,
+    isError: isManagementsError,
+  } = useManagements();
+  const { data: departments = [] } = useDepartments();
   const [search, setSearch] = useState("");
+  const [managementFilter, setManagementFilter] = useState(
+    currentUser?.status === "MANAGEMENT_HEAD" && currentUser.management_id
+      ? String(currentUser.management_id)
+      : "all",
+  );
+
+  const departmentManagements = useMemo(
+    () =>
+      new Map(
+        departments.map((department) => [
+          String(department.id),
+          String(department.management_id),
+        ]),
+      ),
+    [departments],
+  );
 
   const filteredUsers = useMemo(() => {
-    if (!search.trim()) return users;
-    const query = search.toLowerCase();
-    return users.filter(
-      (user) =>
-        user.username.toLowerCase().includes(query) ||
-        (user.last_name && user.last_name.toLowerCase().includes(query)),
-    );
-  }, [users, search]);
+    const query = search.trim().toLocaleLowerCase("ru");
+    const getUserManagementId = (user: UserWithDepartment) =>
+      user.management_id
+        ? String(user.management_id)
+        : user.department_id
+          ? departmentManagements.get(String(user.department_id))
+          : undefined;
 
-  const leaders = useMemo(() => {
-    return filteredUsers
-      .filter((u) => u.status in STATUS_PRIORITY)
-      .sort(
-        (a, b) =>
-          (STATUS_PRIORITY[a.status] || 99) - (STATUS_PRIORITY[b.status] || 99),
-      );
-  }, [filteredUsers]);
+    return users.filter((user) => {
+      const matchesManagement =
+        managementFilter === "all" ||
+        getUserManagementId(user) === managementFilter;
+      const matchesSearch =
+        !query ||
+        user.username.toLocaleLowerCase("ru").includes(query) ||
+        (user.last_name?.toLocaleLowerCase("ru").includes(query) ?? false) ||
+        (user.department_title?.toLocaleLowerCase("ru").includes(query) ?? false);
+      return matchesManagement && matchesSearch;
+    });
+  }, [users, search, managementFilter, departmentManagements]);
 
   const regularEmployees = useMemo(() => {
-    return filteredUsers.filter((u) => !(u.status in STATUS_PRIORITY));
+    return filteredUsers.filter((user) => user.status === "USER");
   }, [filteredUsers]);
 
   const employeesByDepartment = useMemo(() => {
@@ -94,7 +158,7 @@ export default function ExecutorsView({
     return groups;
   }, [regularEmployees]);
 
-  if (isLoading) return <EmployeesSkeleton />;
+  if (isLoading || isManagementsLoading) return <EmployeesSkeleton />;
 
   if (isError) {
     return (
@@ -105,20 +169,20 @@ export default function ExecutorsView({
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="mx-auto max-w-7xl space-y-6 p-6">
       {/* Шапка страницы */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-200 pb-5">
         <div>
           <h1 className="text-2xl font-bold text-zinc-900 flex items-center gap-2">
             <Users className="h-6 w-6 text-zinc-700" />
-            Сотрудники компании
+            {isManagementHead ? "Сотрудники управления" : "Сотрудники компании"}
           </h1>
           <p className="text-sm text-zinc-500 mt-1">
-            Всего: {users.length} | Руководство и админ.: {leaders.length}
+            {filteredUsers.length} сотрудников отображено из {users.length}
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row">
           {/* Поиск */}
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
@@ -129,6 +193,24 @@ export default function ExecutorsView({
               className="pl-9 border-zinc-200 focus-visible:ring-zinc-900"
             />
           </div>
+
+          {!isManagementHead && <Select
+            value={managementFilter}
+            onValueChange={(value) => value && setManagementFilter(value)}
+            disabled={isManagementsError}
+          >
+            <SelectTrigger className="w-full bg-white sm:w-60">
+              <SelectValue placeholder="Все управления" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Все управления</SelectItem>
+              {managements.map((management) => (
+                <SelectItem key={management.id} value={String(management.id)}>
+                  {management.title}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>}
 
           {/* Кнопка добавления по условию */}
           {canAdd && (
@@ -142,102 +224,110 @@ export default function ExecutorsView({
         </div>
       </div>
 
-      {/* Основной контент */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Руководство (Левая колонка) */}
-        <div className="lg:col-span-4 space-y-4">
-          <div className="flex items-center gap-2 px-1">
-            <Crown className="h-5 w-5 text-amber-500" />
-            <h2 className="text-lg font-semibold text-zinc-900">Руководство</h2>
-            <Badge variant="secondary" className="ml-auto font-mono">
-              {leaders.length}
-            </Badge>
-          </div>
+      {isManagementsError && (
+        <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+          Не удалось загрузить список управлений. Фильтр по управлению недоступен.
+        </p>
+      )}
 
-          <div className="space-y-3">
-            {leaders.length === 0 ? (
+      {filteredUsers.length === 0 ? (
+        <Card className="border-dashed border-zinc-300 bg-white">
+          <CardContent className="p-12 text-center text-sm text-zinc-500">
+            Сотрудники по выбранным фильтрам не найдены.
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-8">
+          {LEADERSHIP_SECTIONS.map(({ role, title, icon: Icon, iconClass }) => {
+            const roleUsers = filteredUsers.filter(
+              (user) => user.status === role,
+            );
+            if (roleUsers.length === 0) return null;
+
+            return (
+              <section key={role} className="space-y-4">
+                <div className="flex items-center gap-2 border-b border-zinc-200 pb-2">
+                  <Icon className={`h-5 w-5 ${iconClass}`} />
+                  <h2 className="text-lg font-semibold text-zinc-900">{title}</h2>
+                  <Badge variant="secondary" className="ml-auto font-mono">
+                    {roleUsers.length}
+                  </Badge>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                  {roleUsers.map((user) => (
+                    <EmployeeCard
+                      key={user.id}
+                      user={user}
+                      variant="featured"
+                      readOnly={readOnly}
+                      editHref={
+                        editBasePath ? `${editBasePath}/${user.id}` : undefined
+                      }
+                    />
+                  ))}
+                </div>
+              </section>
+            );
+          })}
+
+          <section className="space-y-4">
+            <div className="flex items-center gap-2 border-b border-zinc-200 pb-2">
+              <UserCheck className="h-5 w-5 text-zinc-600" />
+              <h2 className="text-lg font-semibold text-zinc-900">
+                Сотрудники по отделам
+              </h2>
+              <Badge variant="secondary" className="ml-auto font-mono">
+                {regularEmployees.length}
+              </Badge>
+            </div>
+            {Object.keys(employeesByDepartment).length === 0 ? (
               <Card className="border-dashed border-zinc-300 bg-zinc-50/50">
-                <CardContent className="p-6 text-center text-sm text-zinc-500">
-                  {search ? "Сотрудники не найдены" : "Состав не назначен"}
+                <CardContent className="p-8 text-center text-sm text-zinc-500">
+                  Сотрудников без руководящей роли не найдено.
                 </CardContent>
               </Card>
             ) : (
-              leaders.map((leader) => (
-                <EmployeeCard
-                  key={leader.id}
-                  user={leader}
-                  variant="featured"
-                  readOnly={readOnly}
-                  editHref={
-                    editBasePath ? `${editBasePath}/${leader.id}` : undefined
-                  }
-                />
-              ))
+              <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                {Object.entries(employeesByDepartment).map(
+                  ([deptId, { title, users: deptUsers }]) => (
+                    <Card key={deptId} className="border-zinc-200 bg-white">
+                      <CardContent className="space-y-3 p-4">
+                        <div className="flex items-center gap-2 border-b border-zinc-100 pb-2">
+                          <Building2 className="h-4 w-4 shrink-0 text-zinc-500" />
+                          <h3 className="truncate text-sm font-semibold text-zinc-800">
+                            {title}
+                          </h3>
+                          <Badge
+                            variant="outline"
+                            className="ml-auto shrink-0 font-mono text-xs"
+                          >
+                            {deptUsers.length}
+                          </Badge>
+                        </div>
+                        <div className="space-y-2">
+                          {deptUsers.map((employee) => (
+                            <EmployeeCard
+                              key={employee.id}
+                              user={employee}
+                              variant="compact"
+                              readOnly={readOnly}
+                              editHref={
+                                editBasePath
+                                  ? `${editBasePath}/${employee.id}`
+                                  : undefined
+                              }
+                            />
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ),
+                )}
+              </div>
             )}
-          </div>
+          </section>
         </div>
-
-        {/* Отделы и сотрудники */}
-        <div className="lg:col-span-8 space-y-4 min-w-0">
-          <div className="flex items-center gap-2 px-1">
-            <UserCheck className="h-5 w-5 text-zinc-600" />
-            <h2 className="text-lg font-semibold text-zinc-900">
-              Сотрудники по отделам
-            </h2>
-            <Badge variant="secondary" className="ml-auto font-mono">
-              {regularEmployees.length}
-            </Badge>
-          </div>
-
-          {Object.keys(employeesByDepartment).length === 0 ? (
-            <Card className="border-dashed border-zinc-300 bg-zinc-50/50">
-              <CardContent className="p-12 text-center text-sm text-zinc-500">
-                {search ? "Сотрудники не найдены" : "Список сотрудников пуст"}
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="flex gap-4 overflow-x-auto pb-4 pt-1 snap-x scrollbar-thin scrollbar-thumb-zinc-300">
-              {Object.entries(employeesByDepartment).map(
-                ([deptId, { title, users: deptUsers }]) => (
-                  <div
-                    key={deptId}
-                    className="w-72 shrink-0 space-y-3 snap-start"
-                  >
-                    <div className="flex items-center gap-2 pb-1 border-b border-zinc-200">
-                      <Building2 className="h-4 w-4 text-zinc-500 shrink-0" />
-                      <h3 className="font-medium text-sm text-zinc-700 truncate">
-                        {title}
-                      </h3>
-                      <Badge
-                        variant="outline"
-                        className="ml-auto text-xs font-mono shrink-0"
-                      >
-                        {deptUsers.length}
-                      </Badge>
-                    </div>
-
-                    <div className="space-y-2">
-                      {deptUsers.map((employee) => (
-                        <EmployeeCard
-                          key={employee.id}
-                          user={employee}
-                          variant="compact"
-                          readOnly={readOnly}
-                          editHref={
-                            editBasePath
-                              ? `${editBasePath}/${employee.id}`
-                              : undefined
-                          }
-                        />
-                      ))}
-                    </div>
-                  </div>
-                ),
-              )}
-            </div>
-          )}
-        </div>
-      </div>
+      )}
     </div>
   );
 }

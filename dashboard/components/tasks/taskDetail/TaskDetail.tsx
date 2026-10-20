@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { ADMIN_ACCESS_ROLES } from "@/constants/main";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 
@@ -78,7 +79,7 @@ export default function TaskDetail({
   // Права на редактирование
   const canEdit = useMemo(() => {
     if (!user) return false;
-    if (user.status === "ADMIN") return true;
+    if (ADMIN_ACCESS_ROLES.includes(user.status)) return true;
 
     const taskDepartments = task.departments || [];
     if (taskDepartments.length !== 1) return false;
@@ -88,7 +89,7 @@ export default function TaskDetail({
   }, [user, task, userDeptId]);
 
   const canDelete = useMemo(() => {
-    if (user.status === "ADMIN") return true;
+    if (ADMIN_ACCESS_ROLES.includes(user.status)) return true;
     if (task.author_id === user.id) return true;
     return false;
   }, [user, task]);

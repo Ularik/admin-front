@@ -7,14 +7,60 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useDepartments } from "@/services/queries/departments";
 import DepCard from "@/components/departments/DepCard";
 import Link from "next/link";
+import { useManagements } from "@/services/queries/managements";
+import { useDeleteDepartment } from "@/services/queries/departments";
+import { useState } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { AxiosError } from "axios";
+import { toast } from "sonner";
+import { useMe } from "@/services/queries/users";
 
 
 export default function DepartmentsPage() {
+  const { data: currentUser } = useMe();
+  const isManagementHead = currentUser?.status === "MANAGEMENT_HEAD";
+  const [managementFilter, setManagementFilter] = useState("all");
   const {
     data: displayDepartments = [],
     isLoading,
     isError,
   } = useDepartments();
+  const {
+    data: managements = [],
+    isLoading: isManagementsLoading,
+    isError: isManagementsError,
+  } = useManagements();
+  const deleteDepartment = useDeleteDepartment();
+
+  const filteredDepartments =
+    !isManagementHead && managementFilter === "all"
+      ? displayDepartments
+      : displayDepartments.filter(
+          (department) =>
+            String(department.management_id) ===
+            (isManagementHead
+              ? String(currentUser?.management_id)
+              : managementFilter),
+        );
+
+  const handleDelete = (id: string) => {
+    deleteDepartment.mutate(id, {
+      onSuccess: () => toast.success("Отдел удален"),
+      onError: (error) => {
+        const detail =
+          error instanceof AxiosError
+            ? error.response?.data?.detail
+            : undefined;
+        toast.error(detail || "Не удалось удалить отдел");
+      },
+    });
+  };
 
 
   return (
@@ -35,6 +81,43 @@ export default function DepartmentsPage() {
             <span>Создать отдел</span>
           </Button>
         </Link>
+      </div>
+
+      <div className="flex flex-col gap-2 sm:max-w-sm">
+        <label
+          htmlFor="management-filter"
+          className="text-sm font-medium text-zinc-700"
+        >
+          Фильтр по управлению
+        </label>
+        <Select
+          value={
+            isManagementHead
+              ? String(currentUser?.management_id ?? "")
+              : managementFilter
+          }
+          onValueChange={(value) => value && setManagementFilter(value)}
+          disabled={isManagementsLoading || isManagementsError}
+        >
+          <SelectTrigger id="management-filter" className="w-full bg-white">
+            <SelectValue placeholder="Выберите управление" />
+          </SelectTrigger>
+          <SelectContent>
+            {!isManagementHead && (
+              <SelectItem value="all">Все управления</SelectItem>
+            )}
+            {managements.map((management) => (
+              <SelectItem key={management.id} value={String(management.id)}>
+                {management.title}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {isManagementsError && (
+          <p className="text-xs text-destructive">
+            Не удалось загрузить управления для фильтра.
+          </p>
+        )}
       </div>
 
       {/* Модальное окно создания отдела */}
@@ -62,8 +145,27 @@ export default function DepartmentsPage() {
       ) : (
         /* Грид-сетка отделов */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {displayDepartments.map((dept) => (
-            <DepCard key={dept.id} dept={dept} />
+          {filteredDepartments.length === 0 ? (
+            <div className="col-span-full rounded-xl border border-dashed border-zinc-300 bg-white p-8 text-center text-sm text-zinc-500">
+              {managementFilter === "all"
+                ? "Отделов пока нет."
+                : "В выбранном управлении отделов нет."}
+            </div>
+          ) : filteredDepartments.map((dept) => (
+            <DepCard
+              key={dept.id}
+              dept={dept}
+              onDelete={handleDelete}
+              isDeleting={
+                deleteDepartment.isPending &&
+                deleteDepartment.variables === dept.id
+              }
+              managementTitle={
+                managements.find(
+                  (management) => management.id === dept.management_id,
+                )?.title
+              }
+            />
           ))}
         </div>
       )}

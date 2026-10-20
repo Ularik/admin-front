@@ -14,6 +14,7 @@ import { useTaskDetail } from "@/services/queries/tasks";
 import { useRouter } from "next/navigation";
 import { use } from "react";
 import { TaskUpdateType } from "@/types/tasks";
+import { ADMIN_ACCESS_ROLES } from "@/constants/main";
 
 
 export default function TaskAdminDetailPage({
@@ -47,7 +48,10 @@ export default function TaskAdminDetailPage({
 
   if (isLoading || isMeLoading) return <TaskDetailSkeleton />;
 
-  if (me?.status !== "ADMIN" && me?.department_id === null) {
+  if (
+    !me ||
+    (!ADMIN_ACCESS_ROLES.includes(me.status) && me.department_id === null)
+  ) {
 
     return (
       <div className="p-6 max-w-4xl mx-auto space-y-6 text-center">

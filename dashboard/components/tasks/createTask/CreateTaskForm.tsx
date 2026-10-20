@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, useWatch } from "react-hook-form";
 import {
   ArrowLeft,
   Paperclip,
@@ -46,7 +46,17 @@ import {
 import type { TaskCreateType } from "@/types/tasks";
 import { useDepartments } from "@/services/queries/departments";
 import { useUsers } from "@/services/queries/users";
+import { useManagements } from "@/services/queries/managements";
 import { UserType } from "@/types/user";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const EMPTY_IDS: string[] = [];
 
 interface Props {
   user: UserType;
@@ -64,18 +74,34 @@ export default function CreateTaskForm({
   const [openDeptSelect, setOpenDeptSelect] = useState(false);
 
   const { data: departments = [] } = useDepartments();
+  const { data: managements = [] } = useManagements();
   const { data: users = [] } = useUsers();
 
-  const isDepartmentLocked = user?.status === "HEAD" || user?.status === "USER";
+  const isDepartmentLocked =
+    user?.status === "HEAD" ||
+    user?.status === "DEPUTY" ||
+    user?.status === "USER";
   const isHead = user?.status === "HEAD";
+  const canSelectManagement =
+    user?.status === "ADMIN" || user?.status === "DIVISION_HEAD";
   const userDeptId = user?.department_id ? String(user.department_id) : null;
+  const userDepartment = departments.find(
+    (department) => String(department.id) === userDeptId,
+  );
+  const fixedManagementIdValue =
+    user?.status === "MANAGEMENT_HEAD"
+      ? user.management_id
+      : isDepartmentLocked
+        ? userDepartment?.management_id ?? user.management_id
+        : undefined;
+  const fixedManagementId =
+    fixedManagementIdValue != null ? Number(fixedManagementIdValue) : null;
 
   const {
     register,
     handleSubmit,
     control,
     setValue,
-    watch,
     formState: { errors, isSubmitting },
   } = useForm<TaskCreateType>({
     defaultValues: {
@@ -83,17 +109,35 @@ export default function CreateTaskForm({
       description: "",
       note: "",
       deadlines: null,
+      management_id: fixedManagementId,
       departments_ids: isDepartmentLocked && userDeptId ? [userDeptId] : [],
       executor_ids: [],
       attachments: [],
     },
   });
 
-  const selectedDepartments = watch("departments_ids") || [];
-  const selectedExecutors = watch("executor_ids") || [];
-  const attachments = watch("attachments") || [];
+  const selectedDepartments =
+    useWatch({ control, name: "departments_ids" }) ?? EMPTY_IDS;
+  const selectedManagementId = useWatch({ control, name: "management_id" });
+  const selectedExecutors =
+    useWatch({ control, name: "executor_ids" }) ?? EMPTY_IDS;
+  const attachments = useWatch({ control, name: "attachments" }) ?? [];
+  const filteredDepartments = useMemo(() => {
+    const managementId = canSelectManagement
+      ? selectedManagementId
+      : fixedManagementId;
+    if (managementId == null) return [];
+    return departments.filter(
+      (department) => String(department.management_id) === String(managementId),
+    );
+  }, [
+    canSelectManagement,
+    departments,
+    fixedManagementId,
+    selectedManagementId,
+  ]);
 
-  // Если зашел HEAD — принудительно фиксируем его отдел
+  // Сотрудникам с ролью отдела разрешен выбор только своего отдела.
   useEffect(() => {
     if (isDepartmentLocked && userDeptId) {
       setValue("departments_ids", [userDeptId]);
@@ -149,7 +193,14 @@ export default function CreateTaskForm({
   const onSubmit = async (data: TaskCreateType) => {
     setServerError(null);
     try {
-      await submitFunc(data);
+      const managementId = canSelectManagement
+        ? data.management_id
+        : fixedManagementId;
+      if (managementId == null) {
+        setServerError("Выберите управление для задачи");
+        return;
+      }
+      await submitFunc({ ...data, management_id: managementId });
     } catch (err: unknown) {
       const detail =
         typeof err === "object" &&
@@ -254,6 +305,65 @@ export default function CreateTaskForm({
               />
             </div>
 
+            {canSelectManagement ? (
+              <div className="space-y-2">
+                <Label>Управление *</Label>
+                <Controller
+                  name="management_id"
+                  control={control}
+                  rules={{
+                    required: "Выберите управление",
+                    validate: (value) =>
+                      value != null || "Выберите управление",
+                  }}
+                  render={({ field }) => (
+                    <Select
+                      value={
+                        field.value != null ? String(field.value) : "none"
+                      }
+                      onValueChange={(value) => {
+                        field.onChange(
+                          value === "none" ? null : Number(value),
+                        );
+                        setValue("departments_ids", []);
+                        setValue("executor_ids", []);
+                      }}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Выберите управление" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Выберите управление</SelectItem>
+                        {managements.map((management) => (
+                          <SelectItem
+                            key={management.id}
+                            value={String(management.id)}
+                          >
+                            {management.title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {errors.management_id && (
+                  <p className="text-xs text-red-500">
+                    {errors.management_id.message}
+                  </p>
+                )}
+              </div>
+            ) : fixedManagementId != null ? (
+              <div className="space-y-2">
+                <Label>Управление</Label>
+                <p className="text-sm text-zinc-600">
+                  {managements.find(
+                    (management) =>
+                      String(management.id) === String(fixedManagementId),
+                  )?.title ?? "Ваше управление"}
+                </p>
+              </div>
+            ) : null}
+
             {/* Отделы */}
             <div className="space-y-2">
               <Label className="flex items-center gap-1.5">
@@ -262,6 +372,11 @@ export default function CreateTaskForm({
                 {isHead && (
                   <span className="text-xs text-amber-600 font-normal flex items-center gap-1 ml-auto">
                     <Lock className="h-3 w-3" /> Фиксировано для вашего отдела
+                  </span>
+                )}
+                {canSelectManagement && (
+                  <span className="text-xs font-normal text-zinc-500">
+                    Отделы доступны только в выбранном управлении
                   </span>
                 )}
               </Label>
@@ -321,7 +436,7 @@ export default function CreateTaskForm({
                                   Отделы не найдены.
                                 </CommandEmpty>
                                 <CommandGroup>
-                                  {departments.map((dept) => {
+                                  {filteredDepartments.map((dept) => {
                                     const deptIdStr = String(dept.id);
                                     const isSelected =
                                       selectedIds.includes(deptIdStr);
@@ -355,12 +470,25 @@ export default function CreateTaskForm({
                           </PopoverContent>
                         </Popover>
                       )}
+                      {canSelectManagement &&
+                        selectedManagementId == null && (
+                          <p className="text-xs text-zinc-500">
+                            Сначала выберите управление.
+                          </p>
+                        )}
+                      {canSelectManagement &&
+                        selectedManagementId != null &&
+                        filteredDepartments.length === 0 && (
+                          <p className="text-xs text-zinc-500">
+                            В выбранном управлении нет отделов.
+                          </p>
+                        )}
 
                       {/* Отображение бейджей выбранных отделов */}
                       {selectedIds.length > 0 && (
                         <div className="flex flex-wrap gap-1.5 pt-1">
                           {selectedIds.map((id) => {
-                            const dept = departments.find(
+                            const dept = filteredDepartments.find(
                               (d) => String(d.id) === id,
                             );
                             if (!dept) return null;

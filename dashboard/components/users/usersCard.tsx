@@ -14,9 +14,10 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import type { UserWithDepartment } from "@/types/user";
 import { useMe } from "@/services/queries/users";
 import Link from "next/link";
+import { ADMIN_ACCESS_ROLES } from "@/constants/main";
 
 export const STATUS_CONFIG: Record<
-  string,
+  UserWithDepartment["status"],
   {
     label: string;
     badgeClass: string;
@@ -34,6 +35,24 @@ export const STATUS_CONFIG: Record<
     avatarClass: "border-purple-400 bg-purple-100 text-purple-900",
     iconClass: "text-purple-600",
     icon: ShieldCheck,
+  },
+  DIVISION_HEAD: {
+    label: "Руководитель подразделения",
+    badgeClass: "bg-indigo-100 text-indigo-800 border-indigo-200",
+    cardClass:
+      "border-indigo-200/80 bg-gradient-to-br from-indigo-50/40 via-white to-white",
+    avatarClass: "border-indigo-400 bg-indigo-100 text-indigo-900",
+    iconClass: "text-indigo-600",
+    icon: Building2,
+  },
+  MANAGEMENT_HEAD: {
+    label: "Начальник управления",
+    badgeClass: "bg-teal-100 text-teal-800 border-teal-200",
+    cardClass:
+      "border-teal-200/80 bg-gradient-to-br from-teal-50/40 via-white to-white",
+    avatarClass: "border-teal-400 bg-teal-100 text-teal-900",
+    iconClass: "text-teal-600",
+    icon: Building2,
   },
   HEAD: {
     label: "Начальник отдела",
@@ -76,12 +95,12 @@ export function EmployeeCard({
   readOnly = false,
   editHref,
 }: EmployeeCardProps) {
-  const config = STATUS_CONFIG[user.status] || STATUS_CONFIG.USER;
+  const config = STATUS_CONFIG[user.status];
   const StatusIcon = config.icon;
   const { data: me } = useMe();
 
   const canEdit = !readOnly &&
-    (me?.status === "ADMIN" ||
+    (Boolean(me && ADMIN_ACCESS_ROLES.includes(me.status)) ||
       (me?.status === "HEAD" && me?.department_id == user.department_id));
 
   const initials =

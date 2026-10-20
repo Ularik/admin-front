@@ -1,6 +1,18 @@
 import type { DepartmentType } from "@/types/departments"
-import { Building2, ArrowUpRight, Calendar } from "lucide-react";
+import { Building2, ArrowUpRight, Calendar, Loader2, Trash2 } from "lucide-react";
 import Link from "next/link";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 
 import {
   Card,
@@ -9,14 +21,21 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import next from "next";
 
 interface Props {
   dept: DepartmentType;
+  managementTitle?: string;
+  onDelete: (id: string) => void;
+  isDeleting: boolean;
 }
 
 
-export default function DepCard({ dept }: Props) {
+export default function DepCard({
+  dept,
+  managementTitle,
+  onDelete,
+  isDeleting,
+}: Props) {
   return (
     <Card
       key={dept.id}
@@ -37,6 +56,12 @@ export default function DepCard({ dept }: Props) {
         <CardDescription className="text-xs text-zinc-500 line-clamp-2 min-h-[2.25rem]">
           {dept.description || "Описание отсутствует"}
         </CardDescription>
+        <p className="text-xs text-zinc-600">
+          Управление:{" "}
+          <span className="font-medium text-zinc-900">
+            {managementTitle || `ID ${dept.management_id}`}
+          </span>
+        </p>
       </CardHeader>
 
       <CardContent className="pt-0 space-y-4">
@@ -51,11 +76,54 @@ export default function DepCard({ dept }: Props) {
               })}
             </span>
           </div>
-          <div className="flex items-center gap-1 text-zinc-900 font-medium group-hover:translate-x-0.5 transition-transform duration-200">
-            <Link href={`/admin/departments/${dept.id}`}>
+          <div className="flex items-center gap-3">
+            <Link
+              href={`/admin/departments/${dept.id}`}
+              className="flex items-center gap-1 font-medium text-zinc-900 hover:underline"
+            >
               <span>Подробнее</span>
+              <ArrowUpRight size={14} />
             </Link>
-            <ArrowUpRight size={14} />
+            <AlertDialog>
+              <AlertDialogTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-destructive hover:text-destructive"
+                    disabled={isDeleting}
+                    aria-label={`Удалить отдел ${dept.title}`}
+                  />
+                }
+              >
+                {isDeleting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4" />
+                )}
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    Удалить отдел «{dept.title}»?
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Отдел будет удален из структуры. Его руководители станут
+                    обычными сотрудниками, а связанные задачи останутся в системе
+                    без привязки к этому отделу.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Отмена</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => onDelete(dept.id)}
+                    className="bg-destructive text-white hover:bg-destructive/90"
+                  >
+                    Удалить отдел
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
       </CardContent>

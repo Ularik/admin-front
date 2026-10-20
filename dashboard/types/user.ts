@@ -1,6 +1,12 @@
 
 
-export type UserRole = "ADMIN" | "HEAD" | "DEPUTY" | "USER";
+export type UserRole =
+  | "ADMIN"
+  | "DIVISION_HEAD"
+  | "MANAGEMENT_HEAD"
+  | "HEAD"
+  | "DEPUTY"
+  | "USER";
 
 
 export interface UserType {
@@ -9,6 +15,7 @@ export interface UserType {
   last_name: string;
   status: UserRole;
   department_id: string | null;
+  management_id?: string | null;
 }
 
 export interface UserUpdateType {
@@ -16,6 +23,7 @@ export interface UserUpdateType {
   last_name: string | null;
   status: UserRole | null;
   department_id: string | null;
+  management_id?: number | null;
 }
 
 export interface UserRegisterType {
@@ -23,6 +31,7 @@ export interface UserRegisterType {
   last_name: string;
   status: UserRole | null;
   department_id: string | null;
+  management_id?: number | null;
   password: string;
 }
 
@@ -47,9 +56,10 @@ export interface UserWithDepartment {
   id: string;
   username: string;
   last_name: string | null;
-  status: string;
+  status: UserRole;
   department_id: string | null;  
-  department_title: string | null
+  department_title: string | null;
+  management_id?: string | null;
 }
 
 export interface LoginFormData {

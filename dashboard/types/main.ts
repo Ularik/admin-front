@@ -2,6 +2,7 @@ export interface PagingParams {
   limit: number;
   offset: number;
   department_id?: string;
+  management_id?: string;
   from_date?: string;
   to_date?: string;
   rush?: boolean;

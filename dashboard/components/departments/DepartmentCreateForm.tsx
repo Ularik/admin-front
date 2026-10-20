@@ -17,7 +17,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useUsers } from "@/services/queries/users";
+import { useManagements } from "@/services/queries/managements";
+import { useMe } from "@/services/queries/users";
 import type { DepartmentCreateType } from "@/types/departments";
+import Link from "next/link";
 
 interface Props {
   initialValue?: DepartmentCreateType;
@@ -34,6 +37,19 @@ export default function DepartmentCreateForm({
 }: Props) {
   const router = useRouter();
   const { data: users = [], isLoading: isUsersLoading } = useUsers();
+  const {
+    data: managements = [],
+    isLoading: isManagementsLoading,
+    isError: isManagementsError,
+  } = useManagements();
+  const { data: currentUser } = useMe();
+  const availableManagements =
+    currentUser?.status === "MANAGEMENT_HEAD"
+      ? managements.filter(
+          (management) =>
+            String(management.id) === String(currentUser.management_id),
+        )
+      : managements;
 
   const isEdit = Boolean(initialValue);
 
@@ -47,6 +63,7 @@ export default function DepartmentCreateForm({
     values: initialValue || {
       title: "",
       description: "",
+      management_id: null,
       head_id: null,
       deputy_head_id: null,
     },
@@ -74,6 +91,81 @@ export default function DepartmentCreateForm({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-5">
+          <div className="space-y-2">
+            <Label
+              htmlFor="management_id"
+              className="text-xs font-semibold text-zinc-700"
+            >
+              Управление <span className="text-red-500">*</span>
+            </Label>
+            <Controller
+              control={control}
+              name="management_id"
+              rules={{
+                required: "Выберите управление",
+                validate: (value) => value !== null || "Выберите управление",
+              }}
+              render={({ field }) => (
+                <Select
+                  disabled={
+                    isManagementsLoading || availableManagements.length === 0
+                  }
+                  onValueChange={(value) =>
+                    field.onChange(value === "none" ? null : Number(value))
+                  }
+                  value={field.value === null ? "none" : String(field.value)}
+                >
+                  <SelectTrigger id="management_id" className="w-full">
+                    <SelectValue placeholder="Выберите управление" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none" className="text-muted-foreground">
+                      Не выбрано
+                    </SelectItem>
+                    {availableManagements.map((management) => (
+                      <SelectItem
+                        key={management.id}
+                        value={String(management.id)}
+                      >
+                        {management.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            {errors.management_id && (
+              <p className="text-[11px] font-medium text-destructive">
+                {errors.management_id.message}
+              </p>
+            )}
+            {isManagementsError && (
+              <p className="text-[11px] font-medium text-destructive">
+                Не удалось загрузить список управлений.
+              </p>
+            )}
+            {!isManagementsLoading &&
+              !isManagementsError &&
+              availableManagements.length === 0 && (
+                <p className="text-[11px] text-zinc-500">
+                  {currentUser?.status === "MANAGEMENT_HEAD"
+                    ? "Для вашей учетной записи не найдено связанное управление."
+                    : (
+                        <>
+                          Сначала{" "}
+                          <Link
+                            href="/admin/managements/new"
+                            className="font-medium text-zinc-900 underline"
+                          >
+                            создайте управление
+                          </Link>
+                          .
+                        </>
+                      )}
+                </p>
+              )}
+          </div>
+
           {/* Название отдела */}
           <div className="space-y-2">
             <Label

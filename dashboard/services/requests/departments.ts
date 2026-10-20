@@ -32,3 +32,7 @@ export async function updateDepartment(
   const res = await axiosApi.put(`/admin/departments/${id}`, payload);
   return res.data;
 }
+
+export async function deleteDepartment(id: string): Promise<void> {
+  await axiosApi.delete(`/admin/departments/${id}`);
+}

@@ -21,11 +21,13 @@ import type { TaskType } from "@/types/tasks";
 
 interface RushTasksProps {
   departmentId?: string;
+  managementId?: string;
   taskBasePath?: string;
 }
 
 export default function RushTasks({
   departmentId,
+  managementId,
   taskBasePath = "/admin/tasks",
 }: RushTasksProps) {
   const [page, setPage] = useState(1);
@@ -45,6 +47,7 @@ export default function RushTasks({
     limit,
     offset: (page - 1) * limit,
     department_id: departmentId,
+    management_id: managementId,
     ...queryParams,
   });
 

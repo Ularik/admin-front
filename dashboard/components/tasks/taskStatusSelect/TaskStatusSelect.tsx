@@ -16,6 +16,7 @@ import { usePatchHeadsTaskStatus } from "@/services/queries/heads/tasks";
 import { usePatchTaskStatus } from "@/services/queries/tasks";
 import { useMe } from "@/services/queries/users";
 import type { TasksStatus } from "@/types/tasks";
+import { ADMIN_ACCESS_ROLES } from "@/constants/main";
 
 const STATUS_LABELS: Record<TasksStatus, string> = {
   NEW: "Новая",
@@ -53,7 +54,7 @@ export default function TaskStatusSelect({ taskId, status, canChange }: Props) {
     const nextStatus = value as TasksStatus;
     setSelectedStatus(nextStatus);
     const mutation =
-      user?.status === "ADMIN"
+      user && ADMIN_ACCESS_ROLES.includes(user.status)
         ? adminMutation
         : user?.status === "HEAD" || user?.status === "DEPUTY"
           ? headsMutation

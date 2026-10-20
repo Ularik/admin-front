@@ -7,6 +7,7 @@ import DepartmentCreateForm from "@/components/departments/DepartmentCreateForm"
 import { useAddDepartments } from "@/services/queries/departments";
 import { DepartmentCreateType } from "@/types/departments";
 import { toast } from "sonner";
+import { AxiosError } from "axios";
 
 
 export default function CreateDepartmentPage() {
@@ -20,8 +21,12 @@ export default function CreateDepartmentPage() {
         toast.success("Отдел успешно создан");
         router.push("/admin/departments");
       },
-      onError: () => {
-        toast.error("Ошибка при создании");
+      onError: (error) => {
+        const detail =
+          error instanceof AxiosError
+            ? error.response?.data?.detail
+            : undefined;
+        toast.error(detail || "Ошибка при создании");
       },
     });
   }

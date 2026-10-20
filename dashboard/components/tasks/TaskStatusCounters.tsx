@@ -5,10 +5,12 @@ import { useTasks } from "@/services/queries/tasks";
 
 interface TaskStatusCountersProps {
   departmentId?: string;
+  managementId?: string;
 }
 
 export default function TaskStatusCounters({
   departmentId,
+  managementId,
 }: TaskStatusCountersProps) {
   const [periodDays, setPeriodDays] = useState(5);
   const periodStart = new Date();
@@ -22,6 +24,7 @@ export default function TaskStatusCounters({
     offset: 0,
     status: ["DONE"],
     department_id: departmentId,
+    management_id: managementId,
     from_date: fromDate,
     to_date: toDate,
   });
@@ -31,6 +34,7 @@ export default function TaskStatusCounters({
     offset: 0,
     status: ["NEW", "PROGRESS"],
     department_id: departmentId,
+    management_id: managementId,
     from_date: fromDate,
     to_date: toDate,
   });
@@ -39,6 +43,7 @@ export default function TaskStatusCounters({
     limit: 1,
     offset: 0,
     department_id: departmentId,
+    management_id: managementId,
     from_date: fromDate,
     to_date: toDate,
     is_expired: true,
@@ -48,7 +53,7 @@ export default function TaskStatusCounters({
     <section className="border-b border-zinc-200 pb-4">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-          Сводка по всем задачам
+          {managementId ? "Сводка по задачам управления" : "Сводка по всем задачам"}
         </h2>
         <label className="flex items-center gap-2 text-[11px] text-zinc-500">
           За последние

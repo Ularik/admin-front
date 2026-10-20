@@ -23,6 +23,9 @@ export default function buildTaskFormData(
   if (data.deadlines && !Number.isNaN(data.deadlines.getTime())) {
     formData.append("deadlines", formatDateOnly(data.deadlines));
   }
+  if ("management_id" in data && data.management_id != null) {
+    formData.append("management_id", String(data.management_id));
+  }
   for (const dep_id of data.departments_ids) {
     formData.append("departments_ids", dep_id);
   }

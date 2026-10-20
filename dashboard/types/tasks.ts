@@ -15,6 +15,7 @@ export interface TaskCreateType {
   description?: string | null;
   deadlines: Date | null;
   note?: string | null;
+  management_id: number | null;
   departments_ids: string[];
   executor_ids: string[];
   attachments: File[];
@@ -43,6 +44,7 @@ export interface TaskFormInputs {
 
 export interface TaskType {
   id: string;
+  management_id: number;
   status: TasksStatus;
   author_id: string;
   author: UserType;

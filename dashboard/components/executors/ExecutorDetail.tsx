@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useForm, Controller } from "react-hook-form";
+import { useEffect } from "react";
+import { useForm, Controller, useWatch } from "react-hook-form";
 import { ArrowLeft, UserCheck, Loader2, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,7 @@ import {
 
 import type { UserUpdateType, UserType } from "@/types/user";
 import { useDepartments } from "@/services/queries/departments";
+import { useManagements } from "@/services/queries/managements";
 import { AxiosError } from "axios";
 
 
@@ -45,6 +47,8 @@ interface Props {
   isDeleting: boolean;
   handleDelete: (id: string) => void;
   serverError: AxiosError<{ detail: string }> | null;
+  isAdmin?: boolean;
+  isManagementHead?: boolean;
 }
 
 export default function ExecutorDetail({ 
@@ -53,28 +57,94 @@ export default function ExecutorDetail({
   handleUpdate,
   isDeleting, 
   handleDelete, 
-  serverError 
+  serverError,
+  isAdmin = false,
+  isManagementHead = false,
 }: Props) {
 
   const router = useRouter();
   const { data: departments = [] } = useDepartments();
+  const { data: managements = [] } = useManagements();
 
   const {
     register,
     handleSubmit,
     control,
+    setValue,
+    clearErrors,
     formState: { errors, isDirty },
   } = useForm<UserUpdateType>({
-    defaultValues: user || {
-      username: "",
-      last_name: "",
-      status: "USER",
-      department_id: null,
+    defaultValues: {
+      username: user.username,
+      last_name: user.last_name,
+      status: user.status,
+      department_id: user.department_id,
+      management_id:
+        user.management_id !== null && user.management_id !== undefined
+          ? Number(user.management_id)
+          : null,
     },
   });
 
+  const selectedRole = useWatch({ control, name: "status" });
+  const selectedDepartmentId = useWatch({ control, name: "department_id" });
+  const selectedManagementId = useWatch({ control, name: "management_id" });
+  const departmentRole =
+    selectedRole === "USER" ||
+    selectedRole === "HEAD" ||
+    selectedRole === "DEPUTY";
+  const departmentRequired =
+    selectedRole === "HEAD" ||
+    selectedRole === "DEPUTY" ||
+    (isAdmin && selectedRole === "USER" && user.status !== "USER");
+  const filteredDepartments = (isAdmin || isManagementHead) && departmentRole
+    ? departments.filter(
+        (department) =>
+          selectedManagementId !== null &&
+          selectedManagementId !== undefined &&
+          String(department.management_id) === String(selectedManagementId),
+      )
+    : departments;
+
+  useEffect(() => {
+    if (
+      (isAdmin || isManagementHead) &&
+      departmentRole &&
+      selectedManagementId == null &&
+      selectedDepartmentId != null
+    ) {
+      const department = departments.find(
+        (item) => String(item.id) === String(selectedDepartmentId),
+      );
+      if (department) {
+        setValue("management_id", department.management_id, {
+          shouldDirty: false,
+        });
+      }
+    }
+  }, [
+    departments,
+    departmentRole,
+    isAdmin,
+    isManagementHead,
+    selectedDepartmentId,
+    selectedManagementId,
+    setValue,
+  ]);
+
   const onSubmit = (data: UserUpdateType) => {
-    handleUpdate({ id: user.id, data });
+    handleUpdate({
+      id: user.id,
+      data: {
+        ...data,
+        management_id:
+          departmentRole ||
+          selectedRole === "MANAGEMENT_HEAD" ||
+          selectedRole === "DIVISION_HEAD"
+            ? data.management_id ?? null
+            : null,
+      },
+    });
   };
 
 
@@ -183,7 +253,6 @@ export default function ExecutorDetail({
               />
             </div>
 
-            {/* Роль / Статус (status) */}
             <div className="space-y-2">
               <Label>Роль в системе *</Label>
               <Controller
@@ -193,22 +262,50 @@ export default function ExecutorDetail({
                 render={({ field }) => (
                   <Select
                     value={field.value || undefined}
-                    onValueChange={field.onChange}
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      if (value === "MANAGEMENT_HEAD") {
+                        setValue("department_id", null);
+                      } else if (
+                        value === "ADMIN" ||
+                        value === "DIVISION_HEAD"
+                      ) {
+                        setValue("department_id", null);
+                        setValue("management_id", null);
+                      }
+                      clearErrors(["department_id", "management_id"]);
+                    }}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Выберите роль" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="USER">Сотрудник (USER)</SelectItem>
-                      <SelectItem value="DEPUTY">
-                        Зам. начальника (DEPUTY)
-                      </SelectItem>
-                      <SelectItem value="HEAD">
-                        Начальник отдела (HEAD)
-                      </SelectItem>
-                      <SelectItem value="ADMIN">
-                        Администратор (ADMIN)
-                      </SelectItem>
+                      {(isAdmin
+                        ? [
+                            ["ADMIN", "Администратор (ADMIN)"],
+                            ["DIVISION_HEAD", "Руководитель подразделения (DIVISION_HEAD)"],
+                            ["MANAGEMENT_HEAD", "Начальник управления (MANAGEMENT_HEAD)"],
+                            ["HEAD", "Начальник отдела (HEAD)"],
+                            ["DEPUTY", "Заместитель начальника (DEPUTY)"],
+                            ["USER", "Сотрудник (USER)"],
+                          ]
+                        : isManagementHead
+                        ? [
+                            ["USER", "Сотрудник (USER)"],
+                            ["DEPUTY", "Заместитель начальника (DEPUTY)"],
+                            ["HEAD", "Начальник отдела (HEAD)"],
+                          ]
+                        : [
+                            ["USER", "Сотрудник (USER)"],
+                            ["DEPUTY", "Зам. начальника (DEPUTY)"],
+                            ["HEAD", "Начальник отдела (HEAD)"],
+                            ["ADMIN", "Администратор (ADMIN)"],
+                          ]
+                      ).map(([value, label]) => (
+                        <SelectItem key={value} value={value}>
+                          {label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 )}
@@ -218,14 +315,119 @@ export default function ExecutorDetail({
               )}
             </div>
 
+            {(isAdmin || isManagementHead) &&
+              (selectedRole === "MANAGEMENT_HEAD" ||
+                selectedRole === "DIVISION_HEAD" ||
+                departmentRole) && (
+                <div className="space-y-2">
+                  <Label>
+                    Управление{" "}
+                    {(isManagementHead ||
+                      selectedRole === "MANAGEMENT_HEAD" ||
+                      departmentRequired) && (
+                      <span className="text-red-500">*</span>
+                    )}
+                  </Label>
+                  <Controller
+                    name="management_id"
+                    control={control}
+                    rules={
+                      isManagementHead ||
+                      selectedRole === "MANAGEMENT_HEAD" ||
+                      departmentRequired
+                        ? {
+                            required: "Выберите управление",
+                            validate: (value) =>
+                              value != null || "Выберите управление",
+                          }
+                        : undefined
+                    }
+                    render={({ field }) => (
+                      <Select
+                        value={
+                          field.value !== null && field.value !== undefined
+                            ? String(field.value)
+                            : "none"
+                        }
+                        onValueChange={(value) =>
+                          {
+                            field.onChange(
+                              value === "none" ? null : Number(value),
+                            );
+                            if (departmentRole) {
+                              setValue("department_id", null, {
+                                shouldDirty: true,
+                              });
+                              clearErrors("department_id");
+                            }
+                          }
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Выберите управление" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">
+                            {isManagementHead ||
+                            selectedRole === "MANAGEMENT_HEAD" ||
+                            departmentRequired
+                              ? "Не выбрано"
+                              : "Без управления"}
+                          </SelectItem>
+                          {managements.map((management) => (
+                            <SelectItem
+                              key={management.id}
+                              value={String(management.id)}
+                            >
+                              {management.title}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {errors.management_id && (
+                    <p className="text-xs text-red-500">
+                      {errors.management_id.message}
+                    </p>
+                  )}
+                </div>
+              )}
+
             {/* Отдел (department_id) */}
+            {(!isAdmin ||
+              departmentRole) && (
             <div className="space-y-2">
-              <Label>Отдел</Label>
+              <Label>
+                Отдел{" "}
+                {(departmentRequired ||
+                  ((isAdmin || isManagementHead) &&
+                    selectedManagementId != null)) && (
+                  <span className="text-red-500">*</span>
+                )}
+              </Label>
               <Controller
                 name="department_id"
                 control={control}
+                rules={
+                  departmentRequired ||
+                  ((isAdmin || isManagementHead) &&
+                    selectedManagementId != null)
+                    ? {
+                        required: "Для этой роли нужно выбрать отдел",
+                        validate: (value) =>
+                          value != null || "Для этой роли нужно выбрать отдел",
+                      }
+                    : undefined
+                }
                 render={({ field }) => (
                   <Select
+                    disabled={
+                      filteredDepartments.length === 0 ||
+                      ((isAdmin || isManagementHead) &&
+                        departmentRole &&
+                        selectedManagementId == null)
+                    }
                     value={
                       field.value !== null && field.value !== undefined
                         ? String(field.value)
@@ -239,8 +441,12 @@ export default function ExecutorDetail({
                       <SelectValue placeholder="Выберите отдел" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">Без отдела</SelectItem>
-                      {departments.map((dept) => (
+                      {(!departmentRequired &&
+                        (!(isAdmin || isManagementHead) ||
+                          selectedManagementId == null)) && (
+                        <SelectItem value="none">Без отдела</SelectItem>
+                      )}
+                      {filteredDepartments.map((dept) => (
                         <SelectItem key={dept.id} value={String(dept.id)}>
                           {dept.title || `Отдел #${dept.id}`}
                         </SelectItem>
@@ -249,7 +455,13 @@ export default function ExecutorDetail({
                   </Select>
                 )}
               />
+              {errors.department_id && (
+                <p className="text-xs text-red-500">
+                  {errors.department_id.message}
+                </p>
+              )}
             </div>
+            )}
 
             {/* Кнопки действия */}
             <div className="flex justify-end gap-3 pt-4 border-t border-zinc-100">

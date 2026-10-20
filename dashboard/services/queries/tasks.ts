@@ -13,6 +13,7 @@ export const useTasks = (params: PagingParams) => {
   return useQuery({
     queryKey: ["tasks", params],
     queryFn: () => getTasks(params),
+    enabled: params.management_id !== "",
   });
 };
 
