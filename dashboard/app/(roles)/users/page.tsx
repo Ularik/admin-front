@@ -42,7 +42,7 @@ export default function UserDashboardPage() {
 
             <section className="grid gap-4 md:grid-cols-2" aria-label="Разделы кабинета">
                 <DashboardLink href="/users/tasks" icon={ClipboardList} title="Задачи отдела" description="Просматривайте задачи, назначенные вашему подразделению." />
-                <DashboardLink href="/users/executors" icon={Users} title="Все сотрудники" description="Откройте список сотрудников и руководителей компании." />
+                <DashboardLink href="/users/executors" icon={Users} title="Сотрудники управления" description="Откройте список сотрудников и руководителей вашего управления." />
             </section>
 
             <Card className="border-zinc-200 bg-zinc-50/70">

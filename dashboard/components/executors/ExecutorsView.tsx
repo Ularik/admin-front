@@ -75,15 +75,19 @@ interface ExecutorsViewProps {
   canAdd?: boolean;
   readOnly?: boolean;
   editBasePath?: string;
+  managementScopeOnly?: boolean;
 }
 
 export default function ExecutorsView({
   canAdd = true,
   readOnly = false,
   editBasePath,
+  managementScopeOnly = false,
 }: ExecutorsViewProps) {
   const { data: currentUser } = useMe();
   const isManagementHead = currentUser?.status === "MANAGEMENT_HEAD";
+  const isManagementScoped =
+    isManagementHead || currentUser?.status === "USER";
   const { data: users = [], isLoading, isError } = useUsers();
   const {
     data: managements = [],
@@ -119,6 +123,14 @@ export default function ExecutorsView({
           : undefined;
 
     return users.filter((user) => {
+      if (
+        managementScopeOnly &&
+        (!["USER", "HEAD", "DEPUTY"].includes(user.status) ||
+          (currentUser?.status === "MANAGEMENT_HEAD" &&
+            String(user.id) === String(currentUser.id)))
+      ) {
+        return false;
+      }
       const matchesManagement =
         managementFilter === "all" ||
         getUserManagementId(user) === managementFilter;
@@ -129,7 +141,14 @@ export default function ExecutorsView({
         (user.department_title?.toLocaleLowerCase("ru").includes(query) ?? false);
       return matchesManagement && matchesSearch;
     });
-  }, [users, search, managementFilter, departmentManagements]);
+  }, [
+    users,
+    search,
+    managementFilter,
+    departmentManagements,
+    managementScopeOnly,
+    currentUser,
+  ]);
 
   const regularEmployees = useMemo(() => {
     return filteredUsers.filter((user) => user.status === "USER");
@@ -175,7 +194,7 @@ export default function ExecutorsView({
         <div>
           <h1 className="text-2xl font-bold text-zinc-900 flex items-center gap-2">
             <Users className="h-6 w-6 text-zinc-700" />
-            {isManagementHead ? "Сотрудники управления" : "Сотрудники компании"}
+            {isManagementScoped ? "Сотрудники управления" : "Сотрудники компании"}
           </h1>
           <p className="text-sm text-zinc-500 mt-1">
             {filteredUsers.length} сотрудников отображено из {users.length}
@@ -194,23 +213,25 @@ export default function ExecutorsView({
             />
           </div>
 
-          {!isManagementHead && <Select
-            value={managementFilter}
-            onValueChange={(value) => value && setManagementFilter(value)}
-            disabled={isManagementsError}
-          >
-            <SelectTrigger className="w-full bg-white sm:w-60">
-              <SelectValue placeholder="Все управления" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Все управления</SelectItem>
-              {managements.map((management) => (
-                <SelectItem key={management.id} value={String(management.id)}>
-                  {management.title}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>}
+          {!managementScopeOnly && (
+            <Select
+              value={managementFilter}
+              onValueChange={(value) => value && setManagementFilter(value)}
+              disabled={isManagementsError}
+            >
+              <SelectTrigger className="w-full bg-white sm:w-60">
+                <SelectValue placeholder="Все управления" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Все управления</SelectItem>
+                {managements.map((management) => (
+                  <SelectItem key={management.id} value={String(management.id)}>
+                    {management.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
 
           {/* Кнопка добавления по условию */}
           {canAdd && (

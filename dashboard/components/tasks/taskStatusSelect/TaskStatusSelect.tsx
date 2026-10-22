@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { usePatchAdminTaskStatus } from "@/services/queries/admin/tasks";
 import { usePatchHeadsTaskStatus } from "@/services/queries/heads/tasks";
+import { usePatchManagementHeadTaskStatus } from "@/services/queries/management-head/tasks";
 import { usePatchTaskStatus } from "@/services/queries/tasks";
 import { useMe } from "@/services/queries/users";
 import type { TasksStatus } from "@/types/tasks";
@@ -40,12 +41,14 @@ export default function TaskStatusSelect({ taskId, status, canChange }: Props) {
   const { data: user } = useMe();
   const adminMutation = usePatchAdminTaskStatus();
   const headsMutation = usePatchHeadsTaskStatus();
+  const managementHeadMutation = usePatchManagementHeadTaskStatus();
   const userMutation = usePatchTaskStatus();
   const [selectedStatus, setSelectedStatus] = useState<TasksStatus>(status);
 
   const isPending =
     adminMutation.isPending ||
     headsMutation.isPending ||
+    managementHeadMutation.isPending ||
     userMutation.isPending;
 
   const handleChange = (value: string | null) => {
@@ -54,7 +57,9 @@ export default function TaskStatusSelect({ taskId, status, canChange }: Props) {
     const nextStatus = value as TasksStatus;
     setSelectedStatus(nextStatus);
     const mutation =
-      user && ADMIN_ACCESS_ROLES.includes(user.status)
+      user?.status === "MANAGEMENT_HEAD"
+        ? managementHeadMutation
+        : user && ADMIN_ACCESS_ROLES.includes(user.status)
         ? adminMutation
         : user?.status === "HEAD" || user?.status === "DEPUTY"
           ? headsMutation

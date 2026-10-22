@@ -63,7 +63,11 @@ export default function DepartmentCreateForm({
     values: initialValue || {
       title: "",
       description: "",
-      management_id: null,
+      management_id:
+        currentUser?.status === "MANAGEMENT_HEAD" &&
+        currentUser.management_id != null
+          ? Number(currentUser.management_id)
+          : null,
       head_id: null,
       deputy_head_id: null,
     },
@@ -108,7 +112,9 @@ export default function DepartmentCreateForm({
               render={({ field }) => (
                 <Select
                   disabled={
-                    isManagementsLoading || availableManagements.length === 0
+                    isManagementsLoading ||
+                    availableManagements.length === 0 ||
+                    currentUser?.status === "MANAGEMENT_HEAD"
                   }
                   onValueChange={(value) =>
                     field.onChange(value === "none" ? null : Number(value))
@@ -243,11 +249,18 @@ export default function DepartmentCreateForm({
                     <SelectItem value="none" className="text-muted-foreground">
                       Не выбрано
                     </SelectItem>
-                    {users.map((user) => (
+                    {users
+                      .filter((user) =>
+                        currentUser?.status === "MANAGEMENT_HEAD"
+                          ? ["USER", "HEAD", "DEPUTY"].includes(user.status) &&
+                            String(user.id) !== String(currentUser.id)
+                          : true,
+                      )
+                      .map((user) => (
                       <SelectItem key={user.id} value={String(user.id)}>
                         {getUserDisplayName(user)}
                       </SelectItem>
-                    ))}
+                      ))}
                   </SelectContent>
                 </Select>
               )}
@@ -277,11 +290,18 @@ export default function DepartmentCreateForm({
                     <SelectItem value="none" className="text-muted-foreground">
                       Не выбрано
                     </SelectItem>
-                    {users.map((user) => (
+                    {users
+                      .filter((user) =>
+                        currentUser?.status === "MANAGEMENT_HEAD"
+                          ? ["USER", "HEAD", "DEPUTY"].includes(user.status) &&
+                            String(user.id) !== String(currentUser.id)
+                          : true,
+                      )
+                      .map((user) => (
                       <SelectItem key={user.id} value={String(user.id)}>
                         {getUserDisplayName(user)}
                       </SelectItem>
-                    ))}
+                      ))}
                   </SelectContent>
                 </Select>
               )}

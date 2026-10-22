@@ -58,6 +58,7 @@ interface TaskMainInfoProps {
   onRemoveExistingFile: (fileId: string) => void;
   onRemoveNewFile: (index: number) => void;
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  documentDownloadBasePath?: string;
 }
 
 export function TaskMainInfo({
@@ -69,6 +70,7 @@ export function TaskMainInfo({
   onRemoveExistingFile,
   onRemoveNewFile,
   onFileChange,
+  documentDownloadBasePath = "/api/tasks/task-documents",
 }: TaskMainInfoProps) {
   const {
     register,
@@ -80,6 +82,13 @@ export function TaskMainInfo({
 
   const isAdmin = Boolean(me && ADMIN_ACCESS_ROLES.includes(me.status));
   const { data: departments = [] } = useDepartments();
+  const availableDepartments =
+    me?.status === "MANAGEMENT_HEAD"
+      ? departments.filter(
+          (department) =>
+            String(department.management_id) === String(me.management_id),
+        )
+      : departments;
 
   const [openDeptSelect, setOpenDeptSelect] = useState(false);
 
@@ -155,7 +164,7 @@ export function TaskMainInfo({
                             Отделы не найдены.
                           </CommandEmpty>
                           <CommandGroup>
-                            {departments.map((dept) => {
+                            {availableDepartments.map((dept) => {
                               const deptIdStr = String(dept.id);
                               const isSelected =
                                 selectedIds.includes(deptIdStr);
@@ -326,7 +335,7 @@ export function TaskMainInfo({
                   </Button>
                 ) : (
                   <a
-                    href={`/api/tasks/task-documents/${file.id}/download`}
+                    href={`${documentDownloadBasePath}/${file.id}/download`}
                     download
                     target="_blank"
                     rel="noreferrer"

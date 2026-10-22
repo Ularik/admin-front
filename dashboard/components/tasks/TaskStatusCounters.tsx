@@ -6,11 +6,13 @@ import { useTasks } from "@/services/queries/tasks";
 interface TaskStatusCountersProps {
   departmentId?: string;
   managementId?: string;
+  tasksApiPath?: string;
 }
 
 export default function TaskStatusCounters({
   departmentId,
   managementId,
+  tasksApiPath = "/tasks/",
 }: TaskStatusCountersProps) {
   const [periodDays, setPeriodDays] = useState(5);
   const periodStart = new Date();
@@ -19,35 +21,44 @@ export default function TaskStatusCounters({
   const fromDate = periodStart.toISOString().slice(0, 10);
   const toDate = new Date().toISOString().slice(0, 10);
 
-  const { data: doneData } = useTasks({
-    limit: 1,
-    offset: 0,
-    status: ["DONE"],
-    department_id: departmentId,
-    management_id: managementId,
-    from_date: fromDate,
-    to_date: toDate,
-  });
+  const { data: doneData } = useTasks(
+    {
+      limit: 1,
+      offset: 0,
+      status: ["DONE"],
+      department_id: departmentId,
+      management_id: managementId,
+      from_date: fromDate,
+      to_date: toDate,
+    },
+    tasksApiPath,
+  );
 
-  const { data: activeData } = useTasks({
-    limit: 1,
-    offset: 0,
-    status: ["NEW", "PROGRESS"],
-    department_id: departmentId,
-    management_id: managementId,
-    from_date: fromDate,
-    to_date: toDate,
-  });
+  const { data: activeData } = useTasks(
+    {
+      limit: 1,
+      offset: 0,
+      status: ["NEW", "PROGRESS"],
+      department_id: departmentId,
+      management_id: managementId,
+      from_date: fromDate,
+      to_date: toDate,
+    },
+    tasksApiPath,
+  );
 
-  const { data: expiredData } = useTasks({
-    limit: 1,
-    offset: 0,
-    department_id: departmentId,
-    management_id: managementId,
-    from_date: fromDate,
-    to_date: toDate,
-    is_expired: true,
-  });
+  const { data: expiredData } = useTasks(
+    {
+      limit: 1,
+      offset: 0,
+      department_id: departmentId,
+      management_id: managementId,
+      from_date: fromDate,
+      to_date: toDate,
+      is_expired: true,
+    },
+    tasksApiPath,
+  );
 
   return (
     <section className="border-b border-zinc-200 pb-4">

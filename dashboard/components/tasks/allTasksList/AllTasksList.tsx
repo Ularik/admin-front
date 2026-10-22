@@ -27,6 +27,7 @@ interface Props {
   taskScope?: "all" | "department";
   scopeBasePath?: string;
   showScopeToggle?: boolean;
+  tasksApiPath?: string;
 }
 
 export default function AllTasksList({
@@ -38,6 +39,7 @@ export default function AllTasksList({
   taskScope,
   scopeBasePath,
   showScopeToggle = true,
+  tasksApiPath = "/tasks/",
 }: Props) {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
@@ -56,33 +58,43 @@ export default function AllTasksList({
     isLoading: isManagementsLoading,
     isError: isManagementsError,
   } = useManagements();
+  const visibleManagements =
+    user.status === "MANAGEMENT_HEAD"
+      ? managements.filter(
+          (management) =>
+            String(management.id) === String(user.management_id),
+        )
+      : managements;
 
-  const selectedManagementId = managements.some(
+  const selectedManagementId = visibleManagements.some(
     (management) => String(management.id) === requestedManagementId,
   )
     ? requestedManagementId
-    : managements.length > 0
+    : visibleManagements.length > 0
       ? String(
           (
-            managements.find(
+            visibleManagements.find(
               (management) =>
                 String(management.id) === String(user.management_id),
-            ) ?? managements[0]
+            ) ?? visibleManagements[0]
           ).id,
         )
       : isManagementsLoading
         ? requestedManagementId
         : "";
-  const { data, isLoading: isTasksLoading, isError: isTasksError } = useTasks({
-    limit,
-    offset,
-    department_id: departmentId,
-    management_id:
-      taskScope === "department" ? undefined : selectedManagementId,
-    from_date: fromDate || undefined,
-    to_date: toDate || undefined,
-    rush: rushOnly || undefined,
-  });
+  const { data, isLoading: isTasksLoading, isError: isTasksError } = useTasks(
+    {
+      limit,
+      offset,
+      department_id: departmentId,
+      management_id:
+        taskScope === "department" ? undefined : selectedManagementId,
+      from_date: fromDate || undefined,
+      to_date: toDate || undefined,
+      rush: rushOnly || undefined,
+    },
+    tasksApiPath,
+  );
 
   const tasks: TaskType[] = data?.items ?? EMPTY_TASKS;
   const total = data?.total ?? 0;
@@ -143,7 +155,7 @@ export default function AllTasksList({
           <TaskScopeToggle active={taskScope} basePath={scopeBasePath} />
         )}
         {taskScope !== "department" && !isManagementsLoading && (
-          managements.length > 0 ? (
+          visibleManagements.length > 0 ? (
             <div className="flex flex-col gap-1.5">
               <label
                 htmlFor="tasks-management"
@@ -160,7 +172,7 @@ export default function AllTasksList({
                 }}
                 className="h-9 w-full max-w-sm rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-700 outline-none focus:border-zinc-400 focus:ring-2 focus:ring-zinc-200"
               >
-                {managements.map((management) => (
+                {visibleManagements.map((management) => (
                   <option key={management.id} value={String(management.id)}>
                     {management.title}
                   </option>

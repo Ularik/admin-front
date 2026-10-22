@@ -10,6 +10,7 @@ import buildTaskFormData from "@/services/utils";
 
 export async function getTasks(
   params: PagingParams,
+  tasksPath = "/tasks/",
 ): Promise<TasksApiResponseType> {
   const queryParams = new URLSearchParams();
   queryParams.set("limit", String(params.limit));
@@ -29,14 +30,17 @@ export async function getTasks(
   }
   params.status?.forEach((status) => queryParams.append("status", status));
 
-  const res = await axiosApi.get("/tasks/", {
+  const res = await axiosApi.get(tasksPath, {
     params: queryParams,
   });
   return res.data;
 }
 
-export async function getTaskDetail(id: string): Promise<TaskType> {
-  const res = await axiosApi.get(`/tasks/${id}`);
+export async function getTaskDetail(
+  id: string,
+  tasksPath = "/tasks",
+): Promise<TaskType> {
+  const res = await axiosApi.get(`${tasksPath}/${id}`);
   return res.data;
 }
 

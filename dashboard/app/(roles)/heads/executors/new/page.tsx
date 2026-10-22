@@ -47,7 +47,7 @@ export default function ExecutorAddPage() {
     );
   }
 
-  return <ExecutorAddForm head={me} />;
+  return <ExecutorAddForm />;
 }
 
 function ExecutorAddSkeleton() {

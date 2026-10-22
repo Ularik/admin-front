@@ -27,6 +27,7 @@ interface Props {
   managementTitle?: string;
   onDelete: (id: string) => void;
   isDeleting: boolean;
+  basePath?: string;
 }
 
 
@@ -35,6 +36,7 @@ export default function DepCard({
   managementTitle,
   onDelete,
   isDeleting,
+  basePath = "/admin/departments",
 }: Props) {
   return (
     <Card
@@ -78,7 +80,7 @@ export default function DepCard({
           </div>
           <div className="flex items-center gap-3">
             <Link
-              href={`/admin/departments/${dept.id}`}
+              href={`${basePath}/${dept.id}`}
               className="flex items-center gap-1 font-medium text-zinc-900 hover:underline"
             >
               <span>Подробнее</span>

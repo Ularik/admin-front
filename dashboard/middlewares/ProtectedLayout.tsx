@@ -4,7 +4,10 @@ import type { ReactNode } from "react";
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
-import { ADMIN_ACCESS_ROLES, roleDashboardPaths } from "@/constants/main";
+import {
+  ADMIN_DASHBOARD_ROLES,
+  roleDashboardPaths,
+} from "@/constants/main";
 import type { UserRole } from "@/types/user";
 import { useMe } from "@/services/queries/users";
 
@@ -29,7 +32,7 @@ const ProtectedLayout = ({ children, roles }: Props) => {
     
     if (
       pathname.startsWith("/admin") &&
-      !ADMIN_ACCESS_ROLES.includes(user.status)
+      !ADMIN_DASHBOARD_ROLES.includes(user.status)
     ) {
       router.replace(roleDashboardPaths[user.status]);
       return;
@@ -37,7 +40,15 @@ const ProtectedLayout = ({ children, roles }: Props) => {
 
     if (
       pathname.startsWith("/heads") &&
-      ![...ADMIN_ACCESS_ROLES, "HEAD", "DEPUTY"].includes(user.status)
+      ![...ADMIN_DASHBOARD_ROLES, "HEAD", "DEPUTY"].includes(user.status)
+    ) {
+      router.replace(roleDashboardPaths[user.status]);
+      return;
+    }
+
+    if (
+      pathname.startsWith("/management-head") &&
+      user.status !== "MANAGEMENT_HEAD"
     ) {
       router.replace(roleDashboardPaths[user.status]);
     }

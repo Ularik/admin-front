@@ -23,12 +23,16 @@ interface RushTasksProps {
   departmentId?: string;
   managementId?: string;
   taskBasePath?: string;
+  tasksApiPath?: string;
+  documentDownloadBasePath?: string;
 }
 
 export default function RushTasks({
   departmentId,
   managementId,
   taskBasePath = "/admin/tasks",
+  tasksApiPath = "/tasks/",
+  documentDownloadBasePath = "/api/tasks/task-documents",
 }: RushTasksProps) {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
@@ -43,13 +47,16 @@ export default function RushTasks({
     is_expired: mode === "expired" ? true : undefined,
   };
 
-  const { data, isPending, isError } = useTasks({
-    limit,
-    offset: (page - 1) * limit,
-    department_id: departmentId,
-    management_id: managementId,
-    ...queryParams,
-  });
+  const { data, isPending, isError } = useTasks(
+    {
+      limit,
+      offset: (page - 1) * limit,
+      department_id: departmentId,
+      management_id: managementId,
+      ...queryParams,
+    },
+    tasksApiPath,
+  );
 
   const tasks: TaskType[] = data?.items ?? [];
   const total = data?.total ?? 0;
@@ -209,7 +216,7 @@ export default function RushTasks({
                     {task.attachments.map((document) => (
                       <a
                         key={document.id}
-                        href={`/api/tasks/task-documents/${document.id}/download`}
+                        href={`${documentDownloadBasePath}/${document.id}/download`}
                         download
                         target="_blank"
                         rel="noreferrer"

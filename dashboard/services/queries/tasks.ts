@@ -9,18 +9,18 @@ import {
 } from "../requests/tasks";
 import { PagingParams } from "@/types/main";
 
-export const useTasks = (params: PagingParams) => {
+export const useTasks = (params: PagingParams, tasksPath = "/tasks/") => {
   return useQuery({
-    queryKey: ["tasks", params],
-    queryFn: () => getTasks(params),
+    queryKey: ["tasks", tasksPath, params],
+    queryFn: () => getTasks(params, tasksPath),
     enabled: params.management_id !== "",
   });
 };
 
-export const useTaskDetail = (id: string) => {
+export const useTaskDetail = (id: string, tasksPath = "/tasks") => {
   return useQuery({
-    queryKey: ["task", id],
-    queryFn: () => getTaskDetail(id),
+    queryKey: ["task", tasksPath, id],
+    queryFn: () => getTaskDetail(id, tasksPath),
   });
 };
 
@@ -42,7 +42,7 @@ export const useUpdateTask = () => {
     mutationFn: putTask,
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
-      queryClient.invalidateQueries({ queryKey: ["task", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ["task"] });
     },
   });
 };
@@ -54,7 +54,7 @@ export const usePatchTaskStatus = () => {
     mutationFn: patchTaskStatus,
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
-      queryClient.invalidateQueries({ queryKey: ["task", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ["task"] });
     },
   });
 };

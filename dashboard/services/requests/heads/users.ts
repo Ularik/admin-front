@@ -1,6 +1,17 @@
-import type { UserType, UserUpdateType } from "@/types/user";
+import type {
+    UserRegisterType,
+    UserResponse,
+    UserType,
+    UserUpdateType,
+} from "@/types/user";
 import axiosApi from "@/lib/axiosApi";
 
+export async function headsCreateUser(
+    body: UserRegisterType,
+): Promise<UserResponse> {
+    const res = await axiosApi.post("/head/users/", body);
+    return res.data;
+}
 
 export async function headsDeleteUser(id: string): Promise<void> {
     await axiosApi.delete(`/head/users/${id}`);

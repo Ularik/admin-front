@@ -16,10 +16,12 @@ export const ADMIN_ACCESS_ROLES: UserRole[] = [
   "MANAGEMENT_HEAD",
 ];
 
+export const ADMIN_DASHBOARD_ROLES: UserRole[] = ["ADMIN", "DIVISION_HEAD"];
+
 export const roleDashboardPaths: Record<UserRole, string> = {
   ADMIN: "/admin",
   DIVISION_HEAD: "/admin",
-  MANAGEMENT_HEAD: "/admin",
+  MANAGEMENT_HEAD: "/management-head",
   HEAD: "/heads",
   DEPUTY: "/heads",
   USER: "/users",
@@ -36,31 +38,55 @@ export const dashboardMenuItems: DashboardMenuItem[] = [
   {
     label: "Панель",
     href: "/admin",
-    roles: ADMIN_ACCESS_ROLES,
+    roles: ADMIN_DASHBOARD_ROLES,
     icon: LayoutDashboard,
   },
   {
     label: "Отделы",
     href: "/admin/departments",
-    roles: ADMIN_ACCESS_ROLES,
+    roles: ADMIN_DASHBOARD_ROLES,
     icon: Users,
   },
   {
     label: "Управления",
     href: "/admin/managements",
-    roles: ["ADMIN", "DIVISION_HEAD", "MANAGEMENT_HEAD"],
+    roles: ADMIN_DASHBOARD_ROLES,
     icon: Building2,
   },
   {
     label: "Задачи",
     href: "/admin/tasks",
-    roles: ADMIN_ACCESS_ROLES,
+    roles: ADMIN_DASHBOARD_ROLES,
     icon: Newspaper,
   },
   {
     label: "Сотрудники",
     href: "/admin/executors",
-    roles: ADMIN_ACCESS_ROLES,
+    roles: ADMIN_DASHBOARD_ROLES,
+    icon: Plane,
+  },
+  {
+    label: "Панель",
+    href: "/management-head",
+    roles: ["MANAGEMENT_HEAD"],
+    icon: LayoutDashboard,
+  },
+  {
+    label: "Задачи управления",
+    href: "/management-head/tasks",
+    roles: ["MANAGEMENT_HEAD"],
+    icon: Newspaper,
+  },
+  {
+    label: "Отделы",
+    href: "/management-head/departments",
+    roles: ["MANAGEMENT_HEAD"],
+    icon: Users,
+  },
+  {
+    label: "Сотрудники",
+    href: "/management-head/executors",
+    roles: ["MANAGEMENT_HEAD"],
     icon: Plane,
   },
   {

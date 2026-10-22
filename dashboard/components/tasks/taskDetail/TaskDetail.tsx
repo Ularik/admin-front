@@ -49,6 +49,7 @@ interface TaskDetailPageProps {
   isUpdating?: boolean;
   isDeleting?: boolean;
   replyBasePath?: string;
+  documentDownloadBasePath?: string;
 }
 
 function parseTaskDeadline(deadline: Date | null) {
@@ -66,6 +67,7 @@ export default function TaskDetail({
   isUpdating = false,
   isDeleting = false,
   replyBasePath = "/heads/tasks",
+  documentDownloadBasePath = "/api/tasks/task-documents",
 }: TaskDetailPageProps) {
   const router = useRouter();
 
@@ -182,7 +184,7 @@ export default function TaskDetail({
         <div className="p-3 bg-amber-50 border border-amber-200 rounded-md text-xs text-amber-800 flex items-center gap-2">
           <Lock className="h-4 w-4 text-amber-600 shrink-0" />
           {isMultiDepartmentTask
-            ? "Редактирование недоступно: задача затрагивает несколько отделов (только для зам директора)."
+            ? "Редактирование недоступно: задача затрагивает несколько отделов."
             : "Вы не можете редактировать эту задачу, она не ваша"}
         </div>
       )}
@@ -305,6 +307,7 @@ export default function TaskDetail({
         <div className="lg:col-span-2 space-y-6">
           <TaskMainInfo
             task={task}
+            documentDownloadBasePath={documentDownloadBasePath}
             isEditing={isEditing && canEdit}
             form={form}
             existingFiles={existingFiles}

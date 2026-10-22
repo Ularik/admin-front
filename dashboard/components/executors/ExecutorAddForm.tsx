@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, Controller } from "react-hook-form";
 import { ArrowLeft, UserPlus, Loader2 } from "lucide-react";
@@ -24,12 +24,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import type { UserRegisterType, UserType } from "@/types/user";
-import { useRegisterMutation } from "@/services/queries/users";
+import type { UserRegisterType } from "@/types/user";
 import { useDepartments } from "@/services/queries/departments";
 import { useManagements } from "@/services/queries/managements";
 import { useMe } from "@/services/queries/users";
 import { useAdminUserCreate } from "@/services/queries/admin/users";
+import { useCreateManagementHeadUser } from "@/services/queries/management-head/organization";
+import { useHeadUserCreate } from "@/services/queries/heads/user";
 
 const ROLE_OPTIONS = {
   USER: "Сотрудник (USER)",
@@ -39,14 +40,11 @@ const ROLE_OPTIONS = {
   DIVISION_HEAD: "Руководитель подразделения (DIVISION_HEAD)",
 } as const;
 
-interface Props {
-    head?: UserType
-}
-
-export default function ExecutorAddForm({ head }: Props) {
+export default function ExecutorAddForm() {
   const router = useRouter();
-  const registerUser = useRegisterMutation();
   const createAdminUser = useAdminUserCreate();
+  const createManagementHeadUser = useCreateManagementHeadUser();
+  const createHeadUser = useHeadUserCreate();
   const { data: currentUser } = useMe();
   const { data: allDepartments = [], isLoading: isDepartmentsLoading } =
     useDepartments();
@@ -56,6 +54,10 @@ export default function ExecutorAddForm({ head }: Props) {
   const allowedRoles =
     currentRole === "MANAGEMENT_HEAD"
       ? (["USER", "DEPUTY", "HEAD"] as const)
+      : currentRole === "HEAD"
+        ? (["USER", "DEPUTY"] as const)
+        : currentRole === "DEPUTY"
+          ? (["USER"] as const)
       : currentRole === "ADMIN" || currentRole === "DIVISION_HEAD"
         ? ([
             "USER",
@@ -89,17 +91,28 @@ export default function ExecutorAddForm({ head }: Props) {
       last_name: "",
       password: "",
       status: "USER",
-      department_id: head? head.department_id : null,
+      department_id:
+        currentRole === "HEAD" || currentRole === "DEPUTY"
+          ? currentUser?.department_id ?? null
+          : null,
       management_id: null,
     },
   });
 
+  const isDepartmentLocked =
+    currentRole === "HEAD" || currentRole === "DEPUTY";
   const selectedRole = watch("status");
   const requiresDepartment =
-    Boolean(head) ||
     selectedRole === "HEAD" ||
     selectedRole === "DEPUTY" ||
-    currentRole === "MANAGEMENT_HEAD";
+    currentRole === "MANAGEMENT_HEAD" ||
+    isDepartmentLocked;
+
+  useEffect(() => {
+    if (isDepartmentLocked && currentUser?.department_id) {
+      setValue("department_id", currentUser.department_id);
+    }
+  }, [currentUser?.department_id, isDepartmentLocked, setValue]);
 
   const onSubmit = async (data: UserRegisterType) => {
     setServerError(null);
@@ -113,8 +126,10 @@ export default function ExecutorAddForm({ head }: Props) {
         management_id:
           data.status === "MANAGEMENT_HEAD" ? data.management_id : null,
       };
-      if (head) {
-        await registerUser.mutateAsync(payload);
+      if (currentRole === "MANAGEMENT_HEAD") {
+        await createManagementHeadUser.mutateAsync(payload);
+      } else if (currentRole === "HEAD" || currentRole === "DEPUTY") {
+        await createHeadUser.mutateAsync(payload);
       } else {
         await createAdminUser.mutateAsync(payload);
       }
@@ -208,7 +223,7 @@ export default function ExecutorAddForm({ head }: Props) {
             </div>
 
             {/* Роль / Статус (status) */}
-            {!head && (
+            {currentRole !== "USER" && (
               <div className="space-y-2">
                 <Label>Роль в системе *</Label>
                 <Controller
@@ -248,7 +263,9 @@ export default function ExecutorAddForm({ head }: Props) {
               </div>
             )}
 
-            {!head && selectedRole === "MANAGEMENT_HEAD" && (
+            {currentRole !== "HEAD" &&
+              currentRole !== "DEPUTY" &&
+              selectedRole === "MANAGEMENT_HEAD" && (
               <div className="space-y-2">
                 <Label>Управление *</Label>
                 <Controller
@@ -291,7 +308,7 @@ export default function ExecutorAddForm({ head }: Props) {
             )}
 
             {/* Отдел (department_id) */}
-            {!head && (
+            {currentRole !== "HEAD" && currentRole !== "DEPUTY" && (
               <div className="space-y-2">
                 <Label>
                   Отдел {requiresDepartment && <span className="text-red-500">*</span>}
@@ -310,7 +327,7 @@ export default function ExecutorAddForm({ head }: Props) {
                   }
                   render={({ field }) => (
                     <Select
-                      disabled={isDepartmentsLoading}
+                      disabled={isDepartmentsLoading || isDepartmentLocked}
                       value={
                         field.value !== null && field.value !== undefined
                           ? String(field.value)
@@ -362,10 +379,16 @@ export default function ExecutorAddForm({ head }: Props) {
               </Button>
               <Button
                 type="submit"
-                disabled={registerUser.isPending || createAdminUser.isPending}
+                disabled={
+                  createAdminUser.isPending ||
+                  createManagementHeadUser.isPending ||
+                  createHeadUser.isPending
+                }
                 className="bg-zinc-900 text-white hover:bg-zinc-800"
               >
-                {(registerUser.isPending || createAdminUser.isPending) && (
+                {(createAdminUser.isPending ||
+                  createManagementHeadUser.isPending ||
+                  createHeadUser.isPending) && (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 )}
                 Создать сотрудника
